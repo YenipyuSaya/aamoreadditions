@@ -22,6 +22,8 @@ Jar output: `build/libs/aamoreadditions-1.0.0.jar`
 
 ## License
 
-Mod license in `gradle.properties` is **All Rights Reserved** (not otherwise chosen).
+- **Original addon code and original audio** (`alloyfurnace.ogg`, `empowerer_structure.ogg`): [MIT](LICENSE) © 2026 YenipyuSaya.
+- **AA-derived textures** (alloy furnace block textures copied/edited from Actually Additions): remain under the Actually Additions MIT license. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `META-INF/licenses/ActuallyAdditions-MIT.txt`. This project does **not** claim sole ownership of those AA originals.
+- **NeoForged MDK template files**: see [TEMPLATE_LICENSE.txt](TEMPLATE_LICENSE.txt).
 
-`TEMPLATE_LICENSE.txt` is the NeoForged MDK template MIT notice and applies to those template files only.
+No Create artwork is redistributed by this project.
