@@ -1,0 +1,17 @@
+{
+  "type": "aamoreadditions:alloying",
+  "ingredients": [
+    {
+      "item": "minecraft:netherite_scrap",
+      "count": 2
+    },
+    {
+      "tag": "c:ingots/gold",
+      "count": 2
+    }
+  ],
+  "result": {
+    "id": "minecraft:netherite_ingot",
+    "count": 1
+  }
+}

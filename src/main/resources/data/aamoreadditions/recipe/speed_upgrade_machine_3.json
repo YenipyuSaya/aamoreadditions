@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["ABA", "BCB", "ABA"],
+  "key": {
+    "A": {"item": "actuallyadditions:empowered_diamatine_crystal"},
+    "B": {"item": "actuallyadditions:empowered_restonia_crystal"},
+    "C": {"item": "actuallyadditions:ender_casing"}
+  },
+  "result": {"id": "aamoreadditions:speed_upgrade_machine_3", "count": 1}
+}

@@ -1,0 +1,23 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "create"
+    }
+  ],
+  "type": "aamoreadditions:alloying",
+  "ingredients": [
+    {
+      "item": "minecraft:andesite",
+      "count": 1
+    },
+    {
+      "tag": "c:nuggets/iron",
+      "count": 1
+    }
+  ],
+  "result": {
+    "id": "create:andesite_alloy",
+    "count": 1
+  }
+}

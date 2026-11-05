@@ -1,0 +1,1 @@
+{"type": "minecraft:block", "pools": [{"bonus_rolls": 0.0, "rolls": 1.0, "conditions": [{"condition": "minecraft:survives_explosion"}], "entries": [{"type": "minecraft:item", "name": "aamoreadditions:decorative_machine_casing"}]}], "random_sequence": "aamoreadditions:blocks/decorative_machine_casing"}

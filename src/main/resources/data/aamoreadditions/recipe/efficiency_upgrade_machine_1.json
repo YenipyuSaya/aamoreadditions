@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["ABA", "BCB", "ABA"],
+  "key": {
+    "A": {"item": "actuallyadditions:palis_crystal"},
+    "B": {"item": "actuallyadditions:emeradic_crystal"},
+    "C": {"item": "actuallyadditions:restonia_crystal_block"}
+  },
+  "result": {"id": "aamoreadditions:efficiency_upgrade_machine_1", "count": 1}
+}

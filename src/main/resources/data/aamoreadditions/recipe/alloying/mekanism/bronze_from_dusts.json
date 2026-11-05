@@ -1,0 +1,23 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "mekanism"
+    }
+  ],
+  "type": "aamoreadditions:alloying",
+  "ingredients": [
+    {
+      "tag": "c:dusts/copper",
+      "count": 3
+    },
+    {
+      "tag": "c:dusts/tin",
+      "count": 1
+    }
+  ],
+  "result": {
+    "id": "mekanism:ingot_bronze",
+    "count": 4
+  }
+}

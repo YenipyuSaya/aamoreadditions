@@ -1,0 +1,22 @@
+{
+  "block.alloyfurnace.working": {
+    "category": "block",
+    "subtitle": "subtitles.aamoreadditions.alloyfurnace.working",
+    "sounds": [
+      {
+        "name": "aamoreadditions:alloyfurnace",
+        "stream": false
+      }
+    ]
+  },
+  "block.empowerer_structure.working": {
+    "category": "block",
+    "subtitle": "subtitles.aamoreadditions.empowerer_structure.working",
+    "sounds": [
+      {
+        "name": "aamoreadditions:empowerer_structure",
+        "stream": false
+      }
+    ]
+  }
+}

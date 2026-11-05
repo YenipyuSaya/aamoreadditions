@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "aamoreadditions:speed_upgrade_machine_1",
+    "aamoreadditions:speed_upgrade_machine_2",
+    "aamoreadditions:speed_upgrade_machine_3",
+    "aamoreadditions:efficiency_upgrade_machine_1",
+    "aamoreadditions:efficiency_upgrade_machine_2"
+  ]
+}

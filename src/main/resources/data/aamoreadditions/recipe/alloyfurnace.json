@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["EAE", "VPV", "EAE"],
+  "key": {
+    "E": {"item": "actuallyadditions:enori_crystal"},
+    "A": {"item": "actuallyadditions:advanced_coil"},
+    "V": {"item": "actuallyadditions:void_crystal"},
+    "P": {"item": "actuallyadditions:powered_furnace"}
+  },
+  "result": {"id": "aamoreadditions:alloyfurnace", "count": 1}
+}

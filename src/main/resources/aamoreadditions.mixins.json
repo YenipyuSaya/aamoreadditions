@@ -1,0 +1,38 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.aamoreadditions.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "AbstractContainerMenuInvoker",
+    "AbstractContainerMenuMixin",
+    "CrusherContainerMixin",
+    "ContainerFurnaceDoubleMixin",
+    "ContainerCoalGeneratorMixin",
+    "ContainerOilGeneratorMixin",
+    "UpgradeQuickMoveMixin",
+    "BlockContainerBaseMixin",
+    "TileEntityCrusherMixin",
+    "EnergyStorageAccessor", "EnergyStorageBaseMixin",
+    "TileEntityPoweredFurnaceMixin",
+    "TileEntityCoalGeneratorMixin",
+    "TileEntityOilGeneratorMixin",
+    "TileEntityHeatCollectorMixin",
+    "TileEntityLeafGeneratorMixin",
+    "BlockEntitySetLevelMixin",
+    "ContainerEnergizerMixin",
+    "BlockPoweredFurnaceSoundMixin",
+    "LevelChunkSetBlockStateMixin",
+    "TileEntityBaseItemHandlerMixin",
+    "TileEntityDisplayStandEnergyMixin",
+    "TileEntityStructureDisplayMixin"
+  ],
+  "client": [
+    "AbstractContainerScreenMixin",
+    "RenderDisplayStandMixin",
+    "RenderEmpowererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

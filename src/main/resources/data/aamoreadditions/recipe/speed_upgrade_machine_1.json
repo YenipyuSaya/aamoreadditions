@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["ABA", "BCB", "ABA"],
+  "key": {
+    "A": {"item": "actuallyadditions:enori_crystal"},
+    "B": {"item": "actuallyadditions:restonia_crystal"},
+    "C": {"item": "actuallyadditions:wood_casing"}
+  },
+  "result": {"id": "aamoreadditions:speed_upgrade_machine_1", "count": 1}
+}

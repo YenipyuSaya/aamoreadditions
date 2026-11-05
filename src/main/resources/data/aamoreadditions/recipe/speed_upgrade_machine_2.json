@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["ABA", "BCB", "ABA"],
+  "key": {
+    "A": {"item": "actuallyadditions:empowered_enori_crystal"},
+    "B": {"item": "actuallyadditions:empowered_restonia_crystal"},
+    "C": {"item": "actuallyadditions:iron_casing"}
+  },
+  "result": {"id": "aamoreadditions:speed_upgrade_machine_2", "count": 1}
+}
