@@ -34,5 +34,12 @@
   "tooltip.aamoreadditions.upgrade_wrench.recorded": "Recorded upgrade slot state:",
   "tooltip.aamoreadditions.upgrade_wrench.empty": "Empty",
   "message.aamoreadditions.upgrade_wrench.recorded": "Upgrade Slots recorded.",
-  "message.aamoreadditions.upgrade_wrench.installed": "Upgrades installed."
+  "message.aamoreadditions.upgrade_wrench.installed": "Upgrades installed.",
+  "message.aamoreadditions.upgrades.wrong_logic": "Wrong plugin logic!",
+  "gui.aamoreadditions.info.boundary": "Boundary Loss has occurred:",
+  "gui.aamoreadditions.info.boundary.speed": "Processing speed: %s",
+  "gui.aamoreadditions.info.boundary.energy": "Energy consumption: %s",
+  "gui.aamoreadditions.info.boundary.utilization": "Utilization: %s",
+  "aamoreadditions.configuration.dependency_upgrade_plugins": "Dependency Upgrade Plugins",
+  "aamoreadditions.configuration.dependency_upgrade_plugins.tooltip": "If true, higher-level upgrades cannot be installed independently. Lower-level upgrades must be installed beforehand.\n\nWarning: This is very likely to cause machines that have already been configured to stop working, you must be clear about what you are doing!"
 }

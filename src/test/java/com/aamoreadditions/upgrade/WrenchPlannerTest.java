@@ -119,9 +119,32 @@ class WrenchPlannerTest {
     @Test void invalidExternalConfigurationIsNotDestroyedWhenNoValidPlanExists() {
         assertEquals(slots("s2", null), plan(slots("s2", "s3"), slots("s2", null), Map.of()));
     }
+    @Test void zeroSlotMachineAndZeroSlotRecordAreValidNoOps() {
+        assertEquals(List.of(),plan(List.of(),List.of(),Map.of()));
+        assertEquals(slots("s1","s2"),plan(List.of(),slots("s1","s2"),Map.of()));
+        assertEquals(List.of(),plan(slots("s1","s2"),List.of(),Map.of()));
+    }
+    @Test void tenDuplicateUpgradesAreSupportedByIndependentMode() {
+        var empty=java.util.Collections.<String>nCopies(10,null);
+        var record=java.util.Collections.nCopies(10,"s3");
+        assertEquals(record,WrenchPlanner.plan(record,empty,ALL,Map.of("s3",10),false,x->true));
+        assertEquals(record,WrenchPlanner.plan(record,empty,ALL,Map.of(),true,x->true));
+    }
+    @Test void repeatedUpgradesNeverExceedStock() {
+        var result=WrenchPlanner.plan(java.util.Collections.nCopies(10,"s3"),java.util.Collections.<String>nCopies(10,null),ALL,Map.of("s3",4),false,x->true);
+        assertEquals(4,java.util.Collections.frequency(result,"s3"));
+        for(int i=0;i<4;i++)assertEquals("s3",result.get(i));
+        for(int i=4;i<10;i++)assertNull(result.get(i));
+    }
+    @Test void independentRecordStillCannotBeAppliedUnderDependencyValidation() {
+        assertEquals(slots(null,null),plan(slots("s3","s3"),slots(null,null),Map.of("s3",2)));
+    }
+    @Test void validRecordCanRepairInvalidMachineStateAsAnAtomicTransaction() {
+        assertEquals(slots("s1","s2","s3"),plan(slots("s1","s2","s3"),slots("s3","s3","s3"),Map.of("s1",1,"s2",1)));
+    }
     @Test void rejectsUnboundedSlotCounts() {
-        assertThrows(IllegalArgumentException.class, () -> plan(slots("s1"), List.of(), Map.of()));
-        assertThrows(IllegalArgumentException.class, () -> plan(slots("s1"), slots(null,null,null,null,null,null), Map.of()));
+        assertThrows(IllegalArgumentException.class, () -> plan(slots("s1"), java.util.Collections.nCopies(11,null), Map.of()));
+        assertThrows(IllegalArgumentException.class, () -> plan(java.util.Collections.nCopies(11,null), slots("s1"), Map.of()));
     }
     @Test void fullBackpackStillPermitsPureMachineReordering() {
         // Capacity of the backpack is irrelevant: the machine's own real items are reserved first.

@@ -34,5 +34,10 @@
   "tooltip.aamoreadditions.upgrade_wrench.recorded": "已记录升级槽位状态：",
   "tooltip.aamoreadditions.upgrade_wrench.empty": "空",
   "message.aamoreadditions.upgrade_wrench.recorded": "升级槽位状态已记录。",
-  "message.aamoreadditions.upgrade_wrench.installed": "升级插件已安装。"
+  "message.aamoreadditions.upgrade_wrench.installed": "升级插件已安装。",
+  "message.aamoreadditions.upgrades.wrong_logic": "错误的插件逻辑！",
+  "gui.aamoreadditions.info.boundary": "边界损耗已产生：",
+  "gui.aamoreadditions.info.boundary.speed": "处理速度：%s",
+  "gui.aamoreadditions.info.boundary.energy": "耗能：%s",
+  "gui.aamoreadditions.info.boundary.utilization": "利用率：%s"
 }

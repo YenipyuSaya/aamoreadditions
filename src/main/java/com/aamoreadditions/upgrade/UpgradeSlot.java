@@ -42,7 +42,7 @@ public class UpgradeSlot extends SlotItemHandler {
     /** A prerequisite can't be taken out while a higher tier that needs it is installed. */
     @Override
     public boolean mayPickup(Player player) {
-        return super.mayPickup(player) && UpgradeRules.canRemove(handler.contents(), getSlotIndex());
+        return super.mayPickup(player) && (!handler.legal() || UpgradeRules.canRemove(handler.contents(), getSlotIndex()));
     }
 
     public UpgradeSlots.Handler handler() {

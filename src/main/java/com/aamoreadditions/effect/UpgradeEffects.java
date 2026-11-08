@@ -4,20 +4,27 @@ import com.aamoreadditions.upgrade.UpgradeSlots;
 import com.aamoreadditions.upgrade.UpgradeType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-import java.util.Set;
 
 /**
  * Resolves the combined multipliers for a machine. Combination rule (confirmed):
- * per line only the highest installed tier counts; lines are multiplied together (EnergyCombine).
+ * dependency mode uses the highest tier per line and legacy multiplication;
+ * independent mode delegates all arithmetic to UpgradeAggregation.
  * Active upgrades are cached in the slot handler and invalidated on slot changes;
  * config values are read live (cheap, cached by NeoForge).
  */
 public final class UpgradeEffects {
     private UpgradeEffects() {}
 
+    private static java.util.List<Double> coefficients(java.util.List<UpgradeType> active, UpgradeType.Line line,
+                                                       java.util.function.ToDoubleFunction<UpgradeType> value) {
+        return active.stream().filter(t -> t.line == line).map(t -> value.applyAsDouble(t)).toList();
+    }
+
     public static double speed(BlockEntity be) {
         MachineKind m = MachineKind.of(be);
         if (m == null || !be.hasData(UpgradeSlots.UPGRADE_INV)) return 1.0;
+        if (!com.aamoreadditions.upgrade.UpgradeStartup.dependency())
+            return UpgradeAggregation.speed(coefficients(active(be), UpgradeType.Line.SPEED, t -> UpgradeConfig.speed(m,t)));
         java.util.List<Double> mults = new java.util.ArrayList<>(2);
         for (UpgradeType t : active(be)) mults.add(UpgradeConfig.speed(m, t));
         return Math.max(0.01, EnergyCombine.combine(mults));
@@ -26,16 +33,28 @@ public final class UpgradeEffects {
     public static double energy(BlockEntity be) {
         MachineKind m = MachineKind.of(be);
         if (m == null || !be.hasData(UpgradeSlots.UPGRADE_INV)) return 1.0;
+        if (!com.aamoreadditions.upgrade.UpgradeStartup.dependency()) {
+            var s = coefficients(active(be), UpgradeType.Line.SPEED, t -> UpgradeConfig.energy(m,t));
+            var e = coefficients(active(be), UpgradeType.Line.EFFICIENCY, t -> UpgradeConfig.energy(m,t));
+            return switch (m) {
+                case CRUSHER, CRUSHER_DOUBLE, POWERED_FURNACE -> UpgradeAggregation.processorEnergy(s,e);
+                case COAL_GENERATOR, OIL_GENERATOR -> UpgradeAggregation.generatorUtilization(s,e);
+                case LEAF_GENERATOR -> UpgradeAggregation.unpenalizedSum(e);
+                default -> 1.0;
+            };
+        }
         java.util.List<Double> mults = new java.util.ArrayList<>(2);
         for (UpgradeType t : active(be)) mults.add(UpgradeConfig.energy(m, t));
         return EnergyCombine.combine(mults);
     }
 
     /** Takes the active set directly: called from the handler itself (also during attachment deserialization). */
-    public static double capacity(BlockEntity be, Set<UpgradeType> active) {
+    public static double capacity(BlockEntity be, java.util.List<UpgradeType> active) {
         MachineKind m = MachineKind.of(be);
         if (m == null) return 1.0;
         java.util.List<Double> mults = new java.util.ArrayList<>(2);
+        if (!com.aamoreadditions.upgrade.UpgradeStartup.dependency())
+            return UpgradeAggregation.unpenalizedSum(coefficients(active, UpgradeType.Line.EFFICIENCY, t -> UpgradeConfig.capacity(m,t)));
         for (UpgradeType t : active) mults.add(UpgradeConfig.capacity(m, t));
         return EnergyCombine.combine(mults);
     }
@@ -57,7 +76,7 @@ public final class UpgradeEffects {
      * captured from the storage before we ever modify it. All readers (GUI bar, receiveEnergy, Jade) see it.
      */
     /** Hidden: receive-limit multiplier of the highest installed efficiency tier only. */
-    public static double inputRate(BlockEntity be, Set<UpgradeType> active) {
+    public static double inputRate(BlockEntity be, java.util.List<UpgradeType> active) {
         MachineKind m = MachineKind.of(be);
         if (m == null) return 1.0;
         for (UpgradeType t : active) if (t.line == UpgradeType.Line.EFFICIENCY) return UpgradeConfig.inputRate(m, t);
@@ -65,13 +84,17 @@ public final class UpgradeEffects {
     }
 
     /** Sets maxReceive = max(1, round(AA's original maxReceive * multiplier)); originals of 0 (generators) stay 0. */
-    public static void applyInputRate(BlockEntity be, int baseMaxReceive, Set<UpgradeType> active) {
+    public static void applyInputRate(BlockEntity be, int baseMaxReceive, java.util.List<UpgradeType> active) {
         var st = storage(be);
-        if (st == null || baseMaxReceive <= 0) return;
+        if (st == null) return;
+        if (!com.aamoreadditions.upgrade.UpgradeStartup.dependency()) {
+            ((com.aamoreadditions.mixin.EnergyStorageAccessor) st).aamoreadditions$setMaxReceive(Integer.MAX_VALUE); return;
+        }
+        if (baseMaxReceive <= 0) return;
         ((com.aamoreadditions.mixin.EnergyStorageAccessor) st).aamoreadditions$setMaxReceive(UpgradeMath.capacity(baseMaxReceive, inputRate(be, active)));
     }
 
-    public static void applyCapacity(BlockEntity be, int baseCapacity, Set<UpgradeType> active) {
+    public static void applyCapacity(BlockEntity be, int baseCapacity, java.util.List<UpgradeType> active) {
         var st = storage(be);
         if (st == null || baseCapacity <= 0) return;
         int cap = UpgradeMath.capacity(baseCapacity, capacity(be, active));
@@ -87,7 +110,7 @@ public final class UpgradeEffects {
         }
     }
 
-    private static Set<UpgradeType> active(BlockEntity be) {
+    private static java.util.List<UpgradeType> active(BlockEntity be) {
         return UpgradeSlots.get(be).activeUpgrades();
     }
 
@@ -100,6 +123,8 @@ public final class UpgradeEffects {
     public static int cooldown(BlockEntity be, int original) {
         MachineKind m = MachineKind.of(be);
         if (m == null || !be.hasData(UpgradeSlots.UPGRADE_INV)) return original;
+        if (!com.aamoreadditions.upgrade.UpgradeStartup.dependency())
+            return UpgradeMath.capacity(original, UpgradeAggregation.leafCooldown((int) active(be).stream().filter(t -> t.line == UpgradeType.Line.SPEED).count()));
         for (UpgradeType t : active(be)) {
             if (t.line == UpgradeType.Line.SPEED) return UpgradeMath.capacity(original, UpgradeConfig.cooldown(m, t));
         }
@@ -124,7 +149,7 @@ public final class UpgradeEffects {
     }
 
     /** Output (maxExtract) multiplier of the highest installed SPEED tier only. */
-    public static double outputRate(BlockEntity be, Set<UpgradeType> active) {
+    public static double outputRate(BlockEntity be, java.util.List<UpgradeType> active) {
         MachineKind m = MachineKind.of(be);
         if (m == null) return 1.0;
         for (UpgradeType t : active) if (t.line == UpgradeType.Line.SPEED) return UpgradeConfig.outputRate(m, t);
@@ -132,9 +157,13 @@ public final class UpgradeEffects {
     }
 
     /** Sets maxExtract = max(1, round(AA's original maxExtract * multiplier)); originals of 0 stay 0. */
-    public static void applyOutputRate(BlockEntity be, int baseMaxExtract, Set<UpgradeType> active) {
+    public static void applyOutputRate(BlockEntity be, int baseMaxExtract, java.util.List<UpgradeType> active) {
         var st = storage(be);
-        if (st == null || baseMaxExtract <= 0) return;
+        if (st == null) return;
+        if (!com.aamoreadditions.upgrade.UpgradeStartup.dependency()) {
+            ((com.aamoreadditions.mixin.EnergyStorageAccessor) st).aamoreadditions$setMaxExtract(Integer.MAX_VALUE); return;
+        }
+        if (baseMaxExtract <= 0) return;
         ((com.aamoreadditions.mixin.EnergyStorageAccessor) st).aamoreadditions$setMaxExtract(UpgradeMath.capacity(baseMaxExtract, outputRate(be, active)));
     }
 

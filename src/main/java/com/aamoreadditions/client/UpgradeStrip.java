@@ -81,7 +81,7 @@ public final class UpgradeStrip {
     public static int slotCount(AbstractContainerMenu menu) {
         int n = 0;
         for (Slot s : menu.slots) if (s instanceof UpgradeSlot) n++;
-        return n == 0 ? 5 : n;
+        return n;
     }
 
     /** Panel x / width for n slots (5 -> 38 / 100, unchanged; 2 -> 65 / 46), centred like the slots. */
@@ -90,7 +90,7 @@ public final class UpgradeStrip {
 
     public static boolean contains(AbstractContainerMenu menu, double rx, double ry) {
         int n = slotCount(menu), x = panelX(n);
-        return rx >= x && rx < x + panelW(n) && ry >= stripY(menu) && ry < stripY(menu) + H;
+        return n > 0 && rx >= x && rx < x + panelW(n) && ry >= stripY(menu) && ry < stripY(menu) + H;
     }
 
     public static boolean isOpen(AbstractContainerMenu menu) {
@@ -139,8 +139,12 @@ public final class UpgradeStrip {
         if (screen.getMenu() instanceof com.aamoreadditions.menu.CasingCrossMenu cm) {
             // Empowerer structure: speed only
             event.addListener(new UpgradeInfoButton(screen.getGuiLeft() + buttonX(screen), screen.getGuiTop() + BTN_Y + UpgradeToggleButton.SIZE + 1,
-                    () -> java.util.List.of(Component.translatable("gui.aamoreadditions.info.speed",
-                            Component.literal(UpgradeInfo.fmt(cm.speedMultiplier())).withStyle(net.minecraft.ChatFormatting.AQUA)).withStyle(net.minecraft.ChatFormatting.WHITE))));
+                    () -> {
+                        var lines = new java.util.ArrayList<Component>();
+                        lines.add(Component.translatable("gui.aamoreadditions.info.speed", Component.literal(UpgradeInfo.fmt(cm.speedMultiplier())).withStyle(net.minecraft.ChatFormatting.AQUA)).withStyle(net.minecraft.ChatFormatting.WHITE));
+                        UpgradeInfo.appendBoundary(lines,cm.upgrades);
+                        return lines;
+                    }));
         } else if (be != null && com.aamoreadditions.effect.MachineKind.of(be) != null && com.aamoreadditions.effect.MachineKind.of(be) != com.aamoreadditions.effect.MachineKind.ENERGIZER) {
             final var fbe = be;
             event.addListener(new UpgradeInfoButton(screen.getGuiLeft() + buttonX(screen), screen.getGuiTop() + BTN_Y + UpgradeToggleButton.SIZE + 1, () -> UpgradeInfo.lines(fbe)));
@@ -174,13 +178,10 @@ public final class UpgradeStrip {
         if (p <= 0f) return;
         int offset = Math.round((1f - ease(p)) * slide(screen.getMenu()));
         int n = slotCount(screen.getMenu()), px = screen.getGuiLeft() + panelX(n), py = screen.getGuiTop() + stripY(screen.getMenu()) + offset;
-        if (n == 5) {
-            g.blit(TEXTURE, px, py, 0, 0, W, H, TEX_W, TEX_H);
-        } else { // left border + n slot cells, then the 5px right border from the 5-slot texture
-            int left = 5 + n * 18;
-            g.blit(TEXTURE, px, py, 0, 0, left, H, TEX_W, TEX_H);
-            g.blit(TEXTURE, px + left, py, W - 5, 0, 5, H, TEX_W, TEX_H);
-        }
+        // Repeat a real cell; never sample beyond the original five-cell texture.
+        g.blit(TEXTURE,px,py,0,0,5,H,TEX_W,TEX_H);
+        for(int i=0;i<n;i++) g.blit(TEXTURE,px+5+i*18,py,5,0,18,H,TEX_W,TEX_H);
+        g.blit(TEXTURE,px+5+n*18,py,W-5,0,5,H,TEX_W,TEX_H);
     }
 
     // ---- Rejection message shown above the GUI (client-side, from synced slot contents) ----
@@ -213,7 +214,17 @@ public final class UpgradeStrip {
 
     @SubscribeEvent
     static void onRenderPost(ScreenEvent.Render.Post event) {
-        if (message == null || !(event.getScreen() instanceof AbstractContainerScreen<?> screen) || !UpgradeMenus.hasUpgradeSlots(screen.getMenu())) return;
+        if (!(event.getScreen() instanceof AbstractContainerScreen<?> screen) || !UpgradeMenus.hasUpgradeSlots(screen.getMenu())) return;
+        boolean illegal = false;
+        for (Slot slot : screen.getMenu().slots) if (slot instanceof UpgradeSlot u) { illegal = !u.handler().legal(); break; }
+        if (illegal) {
+            var g = event.getGuiGraphics();
+            g.pose().pushPose(); g.pose().translate(0,0,400);
+            g.drawCenteredString(Minecraft.getInstance().font,Component.translatable("message.aamoreadditions.upgrades.wrong_logic"),
+                    screen.getGuiLeft()+screen.getXSize()/2,screen.getGuiTop()+stripY(screen.getMenu())-12,0xFFFF5555);
+            g.pose().popPose(); return;
+        }
+        if (message == null) return;
         long age = Util.getMillis() - messageAt;
         if (age > MSG_MS) { message = null; return; }
         float alpha = age < MSG_MS - FADE_MS ? 1f : 1f - (age - (MSG_MS - FADE_MS)) / (float) FADE_MS;

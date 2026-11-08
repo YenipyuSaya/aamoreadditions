@@ -95,8 +95,9 @@ public final class UpgradeConfig {
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         b.comment("Upgrade effects per machine and upgrade, as plain MULTIPLIERS on top of AA's current values (read at runtime).",
-                "Only the highest installed tier of each upgrade line applies; its values are the TOTAL effect at that tier.",
-                "Lines are MULTIPLIED together (speed = speedLine * efficiencyLine, same for energy and capacity).",
+                "Dependency mode only: the highest installed tier of each line applies; its values are the TOTAL effect at that tier.",
+                "Independent mode aggregates every installed plugin; policy and slot counts live in aamoreadditions-startup.toml (restart required).",
+                "Dependency mode: lines are MULTIPLIED together (speed = speedLine * efficiencyLine, same for energy and capacity).",
                 "All results are integers: time = max(1, round(original / speed)) ticks;",
                 "per-tick energy = max(1, ceil(original * energy * speed)) FE/t; storage/rates = max(1, round(original * mult)).",
                 "Example (crusher, 40 FE/t, 100 t): Speed III (x5, x2.5) + Efficiency II (x0.5) -> 20 t at 40*1.25*5 = 250 FE/t.",
@@ -153,13 +154,13 @@ public final class UpgradeConfig {
                         b.comment("Processing machines: TOTAL energy per operation (0 allowed; per-tick use never drops below 1 FE/t).", "Generators: UTILIZATION, multiplies the burn time per fuel after the speed division.").defineInRange("energy_multiplier", d[1], 0.0, 100000.0),
                         b.comment("Max energy storage; stored energy is clamped when it drops.").defineInRange("capacity_multiplier", d[2], 0.01, 100000.0),
                         b.comment("Hidden effect: external FE receive limit (AA's original maxReceive).",
-                                "Only the highest installed EFFICIENCY tier counts (not combined with other lines). Not shown in any tooltip.")
+                                "Dependency mode only: highest EFFICIENCY tier counts. Independent mode uses unlimited I/O.")
                                 .defineInRange("input_rate_multiplier", d[3], 0.01, 100000.0),
-                        b.comment("Generators' FE output limit (AA's maxExtract, captured at runtime). Only the highest SPEED tier counts.")
+                        b.comment("Dependency mode: generators' FE output limit, highest SPEED tier. Independent mode uses unlimited I/O.")
                                 .defineInRange("output_rate_multiplier", d[4], 0.01, 100000.0),
                         b.comment("Heat collector only: while this upgrade is installed, surrounding lava/magma is never consumed.")
                                 .define("prevents_lava_consumption", m == MachineKind.HEAT_COLLECTOR && t.line == UpgradeType.Line.EFFICIENCY),
-                        b.comment("Leaf generator only: multiplies AA's leaf cooldown (ticks between harvests). Only the highest SPEED tier counts.")
+                        b.comment("Dependency mode: leaf cooldown multiplier of highest SPEED tier. Independent mode uses installed speed plugin count.")
                                 .defineInRange("cooldown_multiplier", cooldownDefault(m, t), 0.0, 1000.0)));
                 b.pop();
             }

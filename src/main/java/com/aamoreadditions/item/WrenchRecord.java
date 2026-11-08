@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 /** Immutable native item component. Explicit size preserves trailing/all-empty recorded slots. */
 public record WrenchRecord(int size, ItemContainerContents contents) {
     public static final Codec<WrenchRecord> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.intRange(1, 5).fieldOf("size").forGetter(WrenchRecord::size),
+            Codec.intRange(0, 10).fieldOf("size").forGetter(WrenchRecord::size),
             ItemContainerContents.CODEC.fieldOf("contents").forGetter(WrenchRecord::contents)
     ).apply(instance, WrenchRecord::new));
     public static final StreamCodec<RegistryFriendlyByteBuf, WrenchRecord> STREAM_CODEC =

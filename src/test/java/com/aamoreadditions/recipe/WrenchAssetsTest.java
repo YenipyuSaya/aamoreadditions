@@ -44,6 +44,13 @@ class WrenchAssetsTest {
         assertEquals("97ea64348ce9160e8f4b5beea2e19d89254ab8f6bc3770a297a9b603d6e58f1e",
                 HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(path))));
     }
+    @Test void dependencyWarningIsExactEnglishWithBlankParagraphAndNoChineseOverride() throws Exception {
+        var en=json("assets/aamoreadditions/lang/en_us.json");var zh=json("assets/aamoreadditions/lang/zh_cn.json");
+        String key="aamoreadditions.configuration.dependency_upgrade_plugins";
+        assertEquals("Dependency Upgrade Plugins",en.get(key));
+        assertEquals("If true, higher-level upgrades cannot be installed independently. Lower-level upgrades must be installed beforehand.\n\nWarning: This is very likely to cause machines that have already been configured to stop working, you must be clear about what you are doing!",en.get(key+".tooltip"));
+        assertFalse(zh.containsKey(key));assertFalse(zh.containsKey(key+".tooltip"));
+    }
     @Test void exactBilingualNamesTooltipAndActionBarText() throws Exception {
         var zh = json("assets/aamoreadditions/lang/zh_cn.json"); var en = json("assets/aamoreadditions/lang/en_us.json");
         assertEquals("升级插件扳手", zh.get("item.aamoreadditions.upgrade_wrench"));

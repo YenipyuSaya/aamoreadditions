@@ -159,6 +159,7 @@ public final class CasingCrossEvents {
         // Clear each surviving cell's client-only display, even if its last update was a chunk-entry tag.
         CasingCrossDisplay.sync(level, anchor, true);
         if (e != null) {
+            e.upgrades.drainOverflow(level, anchor);
             List<net.minecraft.world.item.ItemStack> drops = new ArrayList<>();
             for (int i = 0; i < e.inv.getSlots(); i++) {
                 var st = e.inv.getStackInSlot(i);

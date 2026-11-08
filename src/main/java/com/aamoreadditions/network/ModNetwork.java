@@ -37,8 +37,19 @@ public final class ModNetwork {
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
+    public record UpgradePolicyPayload(boolean dependency, java.util.List<Integer> slots) implements CustomPacketPayload {
+        public static final Type<UpgradePolicyPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(AAMoreAdditions.MODID, "upgrade_policy"));
+        public static final StreamCodec<ByteBuf, UpgradePolicyPayload> CODEC = StreamCodec.composite(
+                ByteBufCodecs.BOOL, UpgradePolicyPayload::dependency,
+                ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list(10)), UpgradePolicyPayload::slots, UpgradePolicyPayload::new);
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
     @SubscribeEvent
     public static void register(RegisterPayloadHandlersEvent event) {
+        event.registrar("2").playToClient(UpgradePolicyPayload.TYPE, UpgradePolicyPayload.CODEC,
+                (p, ctx) -> ctx.enqueueWork(() -> com.aamoreadditions.upgrade.UpgradeStartup.remote(
+                        new com.aamoreadditions.upgrade.UpgradeStartup.Snapshot(p.dependency(), p.slots()))));
         event.registrar("1").optional().playToServer(AlloyTransferPayload.TYPE, AlloyTransferPayload.CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> AlloyTransfer.apply(ctx.player(), payload.recipeId())));
         event.registrar("1").optional().playToServer(EmpowererTransferPayload.TYPE, EmpowererTransferPayload.CODEC,

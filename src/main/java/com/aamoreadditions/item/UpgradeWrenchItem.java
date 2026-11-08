@@ -68,7 +68,9 @@ public final class UpgradeWrenchItem extends Item {
         } else {
             UpgradeSlots.Handler handler = target(level, pos);
             if (handler == null) return;
-            if (recording) {
+            if ((recording && !handler.legal()) || (!recording && !UpgradeRules.validContents(held.get(WrenchRecord.TYPE.get()).slots()))) {
+                player.displayClientMessage(Component.translatable("message.aamoreadditions.upgrades.wrong_logic"), true);
+            } else if (recording) {
                 held.set(WrenchRecord.TYPE.get(), WrenchRecord.capture(handler.contents()));
                 player.displayClientMessage(Component.translatable("message.aamoreadditions.upgrade_wrench.recorded"), true);
             } else if (apply(player, handler, held.get(WrenchRecord.TYPE.get()))) {

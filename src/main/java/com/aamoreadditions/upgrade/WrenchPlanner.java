@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 /** Pure, bounded transaction planner. Null means an empty slot, not an absent recording.
- * At most 5 slots => at most 32 final configurations; no world/inventory is mutated here.
+ * At most 10 slots => at most 1024 final configurations; no world/inventory is mutated here.
  */
 public final class WrenchPlanner {
     private WrenchPlanner() {}
@@ -16,8 +16,8 @@ public final class WrenchPlanner {
     public static <T> List<T> plan(List<T> recorded, List<T> current, Predicate<T> accepts,
                                    Map<T, Integer> inventory, boolean creative, Predicate<List<T>> valid) {
         int size = current.size();
-        if (size < 1 || size > 5 || recorded.isEmpty() || recorded.size() > 5)
-            throw new IllegalArgumentException("Upgrade slots must be between 1 and 5");
+        if (size < 0 || size > 10 || recorded.size() > 10)
+            throw new IllegalArgumentException("Upgrade slots must be between 0 and 10");
         List<T> desired = new ArrayList<>(current);
         if (recorded.size() == size) {
             for (int i = 0; i < size; i++) {

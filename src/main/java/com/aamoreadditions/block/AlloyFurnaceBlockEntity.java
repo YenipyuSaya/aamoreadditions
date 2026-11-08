@@ -74,7 +74,7 @@ public class AlloyFurnaceBlockEntity extends TileEntityPoweredFurnace {
     public net.neoforged.neoforge.items.IItemHandler getItemHandler(net.minecraft.core.Direction facing) {
         if (automationHandler == null)
             automationHandler = new net.neoforged.neoforge.items.wrapper.CombinedInvWrapper(inv, extraAuto);
-        return automationHandler;
+        return com.aamoreadditions.upgrade.UpgradeAutomation.items(this, automationHandler);
     }
 
     /** Server: toggle via menu button. */
@@ -118,6 +118,7 @@ public class AlloyFurnaceBlockEntity extends TileEntityPoweredFurnace {
 
     /** Single-line alloying tick. Progress is kept in firstSmeltTime (secondSmeltTime stays 0). */
     private void tickAlloy(net.minecraft.world.level.Level level, BlockPos pos, BlockState state) {
+        if (com.aamoreadditions.upgrade.UpgradeRuntime.tick(this)) { lastSmeltedA = false; return; }
         this.serverTick();
         mergeLegacyOutput();
         secondSmeltTime = 0;

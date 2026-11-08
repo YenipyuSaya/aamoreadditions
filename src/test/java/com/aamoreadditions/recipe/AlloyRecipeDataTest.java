@@ -74,7 +74,23 @@ class AlloyRecipeDataTest {
             int st = i; while (i < s.length() && "+-0123456789.eE".indexOf(s.charAt(i)) >= 0) i++;
             return Double.parseDouble(s.substring(st, i));
         }
-        String str() { i++; StringBuilder b = new StringBuilder(); while (s.charAt(i) != '"') { if (s.charAt(i) == '\\') i++; b.append(s.charAt(i++)); } i++; return b.toString(); }
+        String str() {
+            i++; StringBuilder b = new StringBuilder();
+            while (s.charAt(i) != '"') {
+                char c = s.charAt(i++);
+                if (c == '\\') {
+                    c = s.charAt(i++);
+                    switch (c) {
+                        case 'n' -> c = '\n'; case 'r' -> c = '\r'; case 't' -> c = '\t';
+                        case 'b' -> c = '\b'; case 'f' -> c = '\f';
+                        case 'u' -> { c = (char) Integer.parseInt(s.substring(i, i + 4), 16); i += 4; }
+                        default -> { }
+                    }
+                }
+                b.append(c);
+            }
+            i++; return b.toString();
+        }
         void ws() { while (i < s.length() && Character.isWhitespace(s.charAt(i))) i++; }
     }
 }

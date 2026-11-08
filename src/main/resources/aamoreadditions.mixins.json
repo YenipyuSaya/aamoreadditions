@@ -13,7 +13,8 @@
     "UpgradeQuickMoveMixin",
     "BlockContainerBaseMixin",
     "TileEntityCrusherMixin",
-    "EnergyStorageAccessor", "EnergyStorageBaseMixin",
+    "EnergyStorageAccessor",
+    "EnergyStorageBaseMixin",
     "TileEntityPoweredFurnaceMixin",
     "TileEntityCoalGeneratorMixin",
     "TileEntityOilGeneratorMixin",
@@ -25,7 +26,10 @@
     "LevelChunkSetBlockStateMixin",
     "TileEntityBaseItemHandlerMixin",
     "TileEntityDisplayStandEnergyMixin",
-    "TileEntityStructureDisplayMixin"
+    "TileEntityStructureDisplayMixin",
+    "UpgradeMachineTickMixin",
+    "UpgradeInventoryAutomationMixin",
+    "UpgradeOilAutomationMixin"
   ],
   "client": [
     "AbstractContainerScreenMixin",

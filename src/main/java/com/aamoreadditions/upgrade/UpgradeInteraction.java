@@ -79,7 +79,7 @@ public final class UpgradeInteraction {
         UpgradeSlots.Handler h = UpgradeSlots.get(be);
         for (int i = 0; i < h.getSlots(); i++) { // leftmost filled slot first
             ItemStack s = h.getStackInSlot(i);
-            if (!s.isEmpty() && UpgradeRules.canRemove(h.contents(), i)) { // leftmost removable slot
+            if (!s.isEmpty() && (!h.legal() || UpgradeRules.canRemove(h.contents(), i))) { // leftmost removable slot
                 h.setStackInSlot(i, ItemStack.EMPTY);
                 if (!player.getInventory().add(s)) player.drop(s, false);
                 level.playSound(null, be.getBlockPos(), SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1f, 1f);

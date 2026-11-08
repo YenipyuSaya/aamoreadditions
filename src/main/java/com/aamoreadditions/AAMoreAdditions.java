@@ -43,11 +43,13 @@ public class AAMoreAdditions {
             .build());
 
     public AAMoreAdditions(IEventBus modBus, net.neoforged.fml.ModContainer container) {
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON, com.aamoreadditions.upgrade.UpgradeStartup.SPEC, "aamoreadditions-startup.toml");
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER, com.aamoreadditions.effect.UpgradeConfig.SPEC);
         com.aamoreadditions.block.ModBlocks.register(modBus);
         com.aamoreadditions.sound.ModSounds.register(modBus);
         com.aamoreadditions.menu.ModMenus.register(modBus);
         com.aamoreadditions.recipe.ModRecipes.register(modBus);
+        com.aamoreadditions.recipe.IndependentUpgradeCondition.CONDITIONS.register(modBus);
         com.aamoreadditions.item.WrenchRecord.COMPONENTS.register(modBus);
         ITEMS.register(modBus);
         TABS.register(modBus);
