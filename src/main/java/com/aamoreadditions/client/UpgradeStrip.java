@@ -44,8 +44,8 @@ public final class UpgradeStrip {
     public static final int EXTRA_HEIGHT = 38;
     /** Distance the panel travels: closed = completely hidden behind the original GUI. */
     public static final int SLIDE = 38;
-    /** Empowerer structure: panel sits only 5 px above the GUI top (no title row above it). */
-    public static final int COMPACT_Y = -31;
+    /** Cross uses the same panel height as other machines, keeping its title unobstructed. */
+    public static final int COMPACT_Y = Y;
     public static boolean compact(AbstractContainerMenu m) { return m instanceof com.aamoreadditions.menu.CasingCrossMenu; }
     public static int stripY(AbstractContainerMenu m) { return compact(m) ? COMPACT_Y : Y; }
     public static int extraHeight(AbstractContainerMenu m) { return compact(m) ? -COMPACT_Y : EXTRA_HEIGHT; }

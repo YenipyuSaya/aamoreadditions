@@ -20,7 +20,7 @@ public class UpgradeSlot extends SlotItemHandler {
 
     public UpgradeSlot(AbstractContainerMenu menu, UpgradeSlots.Handler handler, int index) {
         super(handler, index, x0(handler.getSlots()) + index * SPACING,
-                handler.holder() instanceof SpeedOnlyHolder ? -25 : Y); // Empowerer: compact strip (panel y -31)
+                Y); // Same slot and click-area height for every machine, including Cross.
         this.menu = menu;
         this.handler = handler;
     }
