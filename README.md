@@ -6,7 +6,7 @@ NeoForge addon for Actually Additions.
 |---|---|
 | Mod ID | `aamoreadditions` |
 | Minecraft / NeoForge | 1.21.1 / 21.1.249 |
-| Version | 1.0.0 |
+| Version | 1.1.0 |
 | Depends on | Actually Additions `1.3.26+mc1.21.1` (Maven) |
 | Optional compile | Jade, JEI APIs |
 
@@ -18,7 +18,7 @@ Requires JDK 21.
 ./gradlew build
 ```
 
-Jar output: `build/libs/aamoreadditions-1.0.0.jar`
+Jar output: `build/libs/aamoreadditions-1.1.0.jar`
 
 ## License
 
