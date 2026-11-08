@@ -155,6 +155,15 @@ public final class UpgradeSlots {
             refresh();
         }
 
+        /** Commit a complete, validated wrench transaction with just one effects refresh.
+         * In particular, a legal reorder must not temporarily shrink the energy capacity.
+         */
+        public void replaceContents(java.util.List<ItemStack> contents) {
+            if (contents.size() != stacks.size()) throw new IllegalArgumentException("Wrong upgrade slot count");
+            for (int i = 0; i < stacks.size(); i++) stacks.set(i, contents.get(i).copy());
+            onContentsChanged(0);
+        }
+
         @Override
         protected void onContentsChanged(int slot) {
             refresh();

@@ -117,7 +117,7 @@ public final class CasingCrossEvents {
     }
 
     /** Client has no saved data: treat as active when the cell is part of a correctly built cross. Server decides for real. */
-    private static boolean clientLooksActive(Level level, BlockPos pos) {
+    public static boolean clientLooksActive(Level level, BlockPos pos) {
         Block b = level.getBlockState(pos).getBlock();
         if (!isPart(b)) return false;
         for (var p : CasingCrossStructure.PARTS) {

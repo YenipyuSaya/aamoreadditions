@@ -29,5 +29,10 @@
   "jei.aamoreadditions.alloying.transfer.overflow": "Too many items for one slot",
   "jei.aamoreadditions.alloying.tag": "Tag: %s",
   "block.aamoreadditions.decorative_machine_casing": "Decorative Casing",
-  "container.aamoreadditions.casing_cross": "Empowerer"
+  "container.aamoreadditions.casing_cross": "Empowerer",
+  "item.aamoreadditions.upgrade_wrench": "Upgrade Plugins Wrench",
+  "tooltip.aamoreadditions.upgrade_wrench.recorded": "Recorded upgrade slot state:",
+  "tooltip.aamoreadditions.upgrade_wrench.empty": "Empty",
+  "message.aamoreadditions.upgrade_wrench.recorded": "Upgrade Slots recorded.",
+  "message.aamoreadditions.upgrade_wrench.installed": "Upgrades installed."
 }

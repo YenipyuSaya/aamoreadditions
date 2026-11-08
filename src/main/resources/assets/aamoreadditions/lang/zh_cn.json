@@ -29,5 +29,10 @@
   "jei.aamoreadditions.alloying.transfer.overflow": "单个槽位放不下所需数量",
   "jei.aamoreadditions.alloying.tag": "标签：%s",
   "block.aamoreadditions.decorative_machine_casing": "装饰用机器外壳",
-  "container.aamoreadditions.casing_cross": "充能台"
+  "container.aamoreadditions.casing_cross": "充能台",
+  "item.aamoreadditions.upgrade_wrench": "升级插件扳手",
+  "tooltip.aamoreadditions.upgrade_wrench.recorded": "已记录升级槽位状态：",
+  "tooltip.aamoreadditions.upgrade_wrench.empty": "空",
+  "message.aamoreadditions.upgrade_wrench.recorded": "升级槽位状态已记录。",
+  "message.aamoreadditions.upgrade_wrench.installed": "升级插件已安装。"
 }

@@ -21,6 +21,9 @@ public class AAMoreAdditions {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
+    public static final net.neoforged.neoforge.registries.DeferredItem<Item> UPGRADE_WRENCH =
+            ITEMS.register("upgrade_wrench", () -> new com.aamoreadditions.item.UpgradeWrenchItem(new Item.Properties().stacksTo(1)));
+
     // Upgrade items, one per UpgradeType (no effects yet).
     static {
         for (UpgradeType t : UpgradeType.values()) {
@@ -35,6 +38,7 @@ public class AAMoreAdditions {
                 out.accept(com.aamoreadditions.block.ModBlocks.ALLOY_FURNACE_ITEM.get());
                 out.accept(com.aamoreadditions.block.ModBlocks.DECORATIVE_MACHINE_CASING_ITEM.get());
                 for (UpgradeType t : UpgradeType.values()) out.accept(t.item());
+                out.accept(UPGRADE_WRENCH.get());
             })
             .build());
 
@@ -44,6 +48,7 @@ public class AAMoreAdditions {
         com.aamoreadditions.sound.ModSounds.register(modBus);
         com.aamoreadditions.menu.ModMenus.register(modBus);
         com.aamoreadditions.recipe.ModRecipes.register(modBus);
+        com.aamoreadditions.item.WrenchRecord.COMPONENTS.register(modBus);
         ITEMS.register(modBus);
         TABS.register(modBus);
         UpgradeSlots.ATTACHMENTS.register(modBus);
