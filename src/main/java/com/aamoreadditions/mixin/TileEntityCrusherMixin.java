@@ -21,7 +21,9 @@ import org.spongepowered.asm.mixin.injection.Slice;
  * ENERGY_USE is a compile-time constant inlined in AA's bytecode, so it's read reflectively from AA's class.
  */
 @Mixin(value = TileEntityCrusher.class, remap = false)
-public abstract class TileEntityCrusherMixin {
+public abstract class TileEntityCrusherMixin implements com.aamoreadditions.upgrade.UpgradeResetState {
+    @org.spongepowered.asm.mixin.Shadow private boolean lastCrushed;
+    @Override public void aamoreadditions$resetUpgradeWork() { lastCrushed = false; }
     @Unique
     private static final int AAMACHINEUPGRADE$BASE_ENERGY = readEnergyUse();
 

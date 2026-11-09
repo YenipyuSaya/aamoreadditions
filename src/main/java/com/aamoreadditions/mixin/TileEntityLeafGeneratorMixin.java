@@ -23,7 +23,9 @@ import org.spongepowered.asm.mixin.injection.Slice;
  * require = 0: if AA's code shape changes, the effects are skipped instead of crashing.
  */
 @Mixin(value = TileEntityLeafGenerator.class, remap = false)
-public abstract class TileEntityLeafGeneratorMixin {
+public abstract class TileEntityLeafGeneratorMixin implements com.aamoreadditions.upgrade.UpgradeResetState {
+    @org.spongepowered.asm.mixin.Shadow private int nextUseCounter;
+    @Override public void aamoreadditions$resetUpgradeWork() { nextUseCounter = 0; }
     private static final String TICK = "serverTick(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/BlockEntity;)V";
     private static final String CFG = "Lde/ellpeck/actuallyadditions/mod/config/CommonConfig$Machines;";
 

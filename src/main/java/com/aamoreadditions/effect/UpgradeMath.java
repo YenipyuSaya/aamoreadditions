@@ -10,7 +10,7 @@ public final class UpgradeMath {
     /** Processing time: original / speed, rounded, at least 1 tick. */
     public static int time(int originalTicks, double speedMult) {
         if (speedMult == 1.0) return originalTicks;
-        return Math.max(1, (int) Math.round(originalTicks / speedMult));
+        return Math.max(1, (int) Math.min(Integer.MAX_VALUE, Math.round(originalTicks / speedMult)));
     }
 
     /** Per-tick energy = base * totalEnergyMult * speedMult, rounded up. */
@@ -29,13 +29,13 @@ public final class UpgradeMath {
     /** Generator FE/t: max(1, round(original * S)). */
     public static int generatorOutput(int original, double speed) {
         if (speed == 1.0) return original;
-        return Math.max(1, (int) Math.round(original * speed));
+        return Math.max(1, (int) Math.min(Integer.MAX_VALUE, Math.round(original * speed)));
     }
 
     /** Generator burn time: max(1, round(original / S * U)). */
     public static int generatorBurnTime(int original, double speed, double utilization) {
         if (speed == 1.0 && utilization == 1.0) return original;
-        return Math.max(1, (int) Math.round(original / speed * utilization));
+        return Math.max(1, (int) Math.min(Integer.MAX_VALUE, Math.round(original / speed * utilization)));
     }
 
     /** Alloy Furnace FE/t (single line, charged once per tick): (base + extra if Extra slot not empty) with upgrade multipliers. */

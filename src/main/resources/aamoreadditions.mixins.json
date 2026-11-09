@@ -13,7 +13,8 @@
     "UpgradeQuickMoveMixin",
     "BlockContainerBaseMixin",
     "TileEntityCrusherMixin",
-    "EnergyStorageAccessor", "EnergyStorageBaseMixin",
+    "EnergyStorageAccessor",
+    "EnergyStorageBaseMixin",
     "TileEntityPoweredFurnaceMixin",
     "TileEntityCoalGeneratorMixin",
     "TileEntityOilGeneratorMixin",
@@ -21,16 +22,28 @@
     "TileEntityLeafGeneratorMixin",
     "BlockEntitySetLevelMixin",
     "ContainerEnergizerMixin",
+    "ContainerFarmerMixin",
+    "TileEntityFarmerMixin",
+    "FarmerBehaviorCostMixin",
+    "FarmerHarvestMixin",
+    "FarmerDefaultHarvestMixin",
     "BlockPoweredFurnaceSoundMixin",
     "LevelChunkSetBlockStateMixin",
     "TileEntityBaseItemHandlerMixin",
     "TileEntityDisplayStandEnergyMixin",
-    "TileEntityStructureDisplayMixin"
+    "TileEntityStructureDisplayMixin",
+    "UpgradeMachineTickMixin",
+    "UpgradeInventoryAutomationMixin",
+    "UpgradeOilAutomationMixin",
+    "BlockOilGeneratorPauseMixin",
+    "BlockCoalGeneratorPauseMixin"
   ],
   "client": [
     "AbstractContainerScreenMixin",
     "RenderDisplayStandMixin",
-    "RenderEmpowererMixin"
+    "RenderEmpowererMixin",
+    "ConfigTooltipMixin",
+    "GuiFarmerRipeningMixin"
   ],
   "injectors": {
     "defaultRequire": 1

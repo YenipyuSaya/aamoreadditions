@@ -8,6 +8,10 @@
   "message.aamoreadditions.upgrades.already_installed": "已安装此类组件",
   "config.jade.plugin_aamoreadditions.upgrades": "实用拓展：更多拓展：已安装升级",
   "tooltip.aamoreadditions.upgrades": "升级：",
+  "tooltip.aamoreadditions.active_upgrades": "当前激活的升级插件：",
+  "gui.aamoreadditions.info.farmer.cooldown": "工作冷却：%s tick",
+  "gui.aamoreadditions.info.farmer.energy": "耗能倍率：%s",
+  "gui.aamoreadditions.info.farmer.fortune": "当前时运等级：%s",
   "item.aamoreadditions.speed_upgrade_machine_1": "机器速度升级 I",
   "item.aamoreadditions.speed_upgrade_machine_2": "机器速度升级 II",
   "item.aamoreadditions.speed_upgrade_machine_3": "机器速度升级 III",
@@ -29,5 +33,15 @@
   "jei.aamoreadditions.alloying.transfer.overflow": "单个槽位放不下所需数量",
   "jei.aamoreadditions.alloying.tag": "标签：%s",
   "block.aamoreadditions.decorative_machine_casing": "装饰用机器外壳",
-  "container.aamoreadditions.casing_cross": "充能台"
+  "container.aamoreadditions.casing_cross": "充能台",
+  "item.aamoreadditions.upgrade_wrench": "升级插件扳手",
+  "tooltip.aamoreadditions.upgrade_wrench.recorded": "已记录升级槽位状态：",
+  "tooltip.aamoreadditions.upgrade_wrench.empty": "空",
+  "message.aamoreadditions.upgrade_wrench.recorded": "升级槽位状态已记录。",
+  "message.aamoreadditions.upgrade_wrench.installed": "升级插件已安装。",
+  "message.aamoreadditions.upgrades.wrong_logic": "错误的插件逻辑！",
+  "gui.aamoreadditions.info.boundary": "边界损耗已产生：",
+  "gui.aamoreadditions.info.boundary.speed": "处理速度：%s",
+  "gui.aamoreadditions.info.boundary.energy": "耗能：%s",
+  "gui.aamoreadditions.info.boundary.utilization": "利用率：%s"
 }

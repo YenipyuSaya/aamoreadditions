@@ -2,7 +2,7 @@
 
 ## Actually Additions (textures)
 
-Some block textures in this addon are copied or edited from
+Some block and item textures in this addon are copied or edited from
 [Actually Additions](https://github.com/Ellpeck/ActuallyAdditions) artwork.
 Those textures remain under the Actually Additions MIT license. They are **not**
 relicensed by this project’s root `LICENSE`.
@@ -24,6 +24,10 @@ self-created and covered by this project’s MIT license.
 
 - `assets/aamoreadditions/textures/block/alloyfurnace_front.png`
 - `assets/aamoreadditions/textures/block/alloyfurnace_front_animation.png` (+ `.mcmeta`)
+
+### AA-derived upgrade wrench item texture
+
+- `assets/aamoreadditions/textures/item/upgrade_wrench.png`: edited from Actually Additions 1.21.1 / 1.3.26 `assets/actuallyadditions/textures/item/laser_wrench.png`, using the Ender Casing palette and retaining the original black outline.
 
 The complete Actually Additions MIT notice is shipped at
 `META-INF/licenses/ActuallyAdditions-MIT.txt` and reproduced below.

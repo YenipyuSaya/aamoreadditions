@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "aamoreadditions:upgrade_wrench"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "aamoreadditions:upgrade_wrench"
+  }
+}

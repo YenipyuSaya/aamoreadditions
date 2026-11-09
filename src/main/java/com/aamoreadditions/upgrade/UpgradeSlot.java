@@ -20,7 +20,7 @@ public class UpgradeSlot extends SlotItemHandler {
 
     public UpgradeSlot(AbstractContainerMenu menu, UpgradeSlots.Handler handler, int index) {
         super(handler, index, x0(handler.getSlots()) + index * SPACING,
-                handler.holder() instanceof SpeedOnlyHolder ? -25 : Y); // Empowerer: compact strip (panel y -31)
+                Y); // Same slot and click-area height for every machine, including Cross.
         this.menu = menu;
         this.handler = handler;
     }
@@ -42,7 +42,7 @@ public class UpgradeSlot extends SlotItemHandler {
     /** A prerequisite can't be taken out while a higher tier that needs it is installed. */
     @Override
     public boolean mayPickup(Player player) {
-        return super.mayPickup(player) && UpgradeRules.canRemove(handler.contents(), getSlotIndex());
+        return super.mayPickup(player) && (!handler.legal() || UpgradeRules.canRemove(handler.contents(), getSlotIndex()));
     }
 
     public UpgradeSlots.Handler handler() {

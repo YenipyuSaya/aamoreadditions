@@ -92,6 +92,7 @@ public final class AlloyTransfer {
     public static void apply(Player player, String recipeId) {
         if (!(player.containerMenu instanceof AlloyFurnaceMenu menu) || !menu.stillValid(player)) return;
         AlloyFurnaceBlockEntity f = menu.furnace;
+        if (com.aamoreadditions.upgrade.UpgradeRuntime.blocked(f)) return;
         AlloyingRecipe recipe = com.aamoreadditions.recipe.ModRecipes.byId(player.level(), recipeId);
         if (recipe == null) return;
         Result r = simulate(player, f, recipeId, recipe);

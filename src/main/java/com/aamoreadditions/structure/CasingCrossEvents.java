@@ -117,7 +117,7 @@ public final class CasingCrossEvents {
     }
 
     /** Client has no saved data: treat as active when the cell is part of a correctly built cross. Server decides for real. */
-    private static boolean clientLooksActive(Level level, BlockPos pos) {
+    public static boolean clientLooksActive(Level level, BlockPos pos) {
         Block b = level.getBlockState(pos).getBlock();
         if (!isPart(b)) return false;
         for (var p : CasingCrossStructure.PARTS) {
@@ -159,6 +159,7 @@ public final class CasingCrossEvents {
         // Clear each surviving cell's client-only display, even if its last update was a chunk-entry tag.
         CasingCrossDisplay.sync(level, anchor, true);
         if (e != null) {
+            e.upgrades.drainOverflow(level, anchor);
             List<net.minecraft.world.item.ItemStack> drops = new ArrayList<>();
             for (int i = 0; i < e.inv.getSlots(); i++) {
                 var st = e.inv.getStackInSlot(i);

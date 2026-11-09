@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "aamoreadditions:item/upgrade_wrench"
+  }
+}

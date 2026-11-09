@@ -1,15 +1,18 @@
 package com.aamoreadditions.compat.jade;
 
 import com.aamoreadditions.AAMoreAdditions;
+import com.aamoreadditions.block.ModBlocks;
+import com.aamoreadditions.upgrade.UpgradeDisplay;
 import com.aamoreadditions.upgrade.UpgradeSlots;
+import com.aamoreadditions.upgrade.UpgradeStartup;
+import com.aamoreadditions.upgrade.UpgradeType;
+import de.ellpeck.actuallyadditions.mod.blocks.ActuallyBlocks;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.phys.Vec2;
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IBlockComponentProvider;
 import snownee.jade.api.IServerDataProvider;
@@ -17,11 +20,9 @@ import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
 import snownee.jade.api.ui.IElementHelper;
 
-/**
- * Syncs the 5 upgrade slots (the attachment is not synced to clients on its own) and shows
- * "升级：[icon] name, [icon] name". Nothing is shown when no upgrade is installed.
- * Config toggle uid aamoreadditions:upgrades (lang: config.jade.plugin_aamoreadditions.upgrades).
- */
+import java.util.ArrayList;
+
+/** Server-authoritative icon/count groups; no client-side guesses about mode or activation. */
 public enum UpgradeJadeProvider implements IBlockComponentProvider, IServerDataProvider<BlockAccessor> {
     INSTANCE;
 
@@ -35,43 +36,77 @@ public enum UpgradeJadeProvider implements IBlockComponentProvider, IServerDataP
 
     @Override
     public boolean shouldRequestData(BlockAccessor accessor) {
-        BlockEntity be = accessor.getBlockEntity();
-        return be != null && UpgradeSlots.supports(be);
+        var be = accessor.getBlockEntity();
+        return (be != null && UpgradeSlots.supports(be))
+                || accessor.getBlock() == ModBlocks.DECORATIVE_MACHINE_CASING.get()
+                || accessor.getBlock() == ActuallyBlocks.EMPOWERER.get()
+                || accessor.getBlock() == ActuallyBlocks.DISPLAY_STAND.get();
     }
 
     @Override
     public void appendServerData(CompoundTag data, BlockAccessor accessor) {
-        BlockEntity be = accessor.getBlockEntity();
-        if (be == null || !UpgradeSlots.supports(be) || !be.hasData(UpgradeSlots.UPGRADE_INV)) return;
-        UpgradeSlots.Handler h = UpgradeSlots.get(be);
-        ListTag list = new ListTag();
-        for (int i = 0; i < h.getSlots(); i++) {
-            ItemStack s = h.getStackInSlot(i);
-            if (!s.isEmpty()) list.add(s.save(accessor.getLevel().registryAccess()));
+        if (!shouldRequestData(accessor)) return;
+        var handler = UpgradeSlots.target(accessor.getLevel(), accessor.getPosition());
+        if (handler == null) return;
+        boolean dependency = UpgradeStartup.dependency();
+        boolean legal = handler.legal();
+        var active = handler.activeUpgrades();
+        var installed = handler.contents().stream().filter(s -> !s.isEmpty()).toList();
+        var visible = UpgradeDisplay.visible(installed, dependency, legal, stack -> {
+            var type = UpgradeType.of(stack);
+            return type != null && active.contains(type);
+        });
+        var groups = UpgradeDisplay.group(visible, ItemStack::getItem);
+        var state = new CompoundTag();
+        state.putBoolean("Dependency", dependency);
+        state.putBoolean("Legal", legal);
+        var list = new ListTag();
+        for (var group : groups) {
+            var entry = new CompoundTag();
+            entry.put("Item", group.representative().copyWithCount(1).save(accessor.getLevel().registryAccess()));
+            entry.putInt("Count", group.count());
+            list.add(entry);
         }
-        if (!list.isEmpty()) data.put(KEY, list);
+        state.put("Groups", list);
+        // Always send the state, including zero groups, so removal cannot leave a stale list.
+        data.put(KEY, state);
     }
 
     @Override
     public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
-        BlockEntity be = accessor.getBlockEntity();
-        if (be == null || !UpgradeSlots.supports(be)) return;
-        CompoundTag data = accessor.getServerData();
-        if (!data.contains(KEY, Tag.TAG_LIST)) return;
-        ListTag list = data.getList(KEY, Tag.TAG_COMPOUND);
-        IElementHelper helper = IElementHelper.get();
-        boolean first = true;
-        for (int i = 0; i < list.size(); i++) {
-            ItemStack s = ItemStack.parseOptional(accessor.getLevel().registryAccess(), list.getCompound(i));
-            if (s.isEmpty()) continue;
-            if (first) {
-                tooltip.add(helper.text(Component.translatable("tooltip.aamoreadditions.upgrades")));
-                first = false;
-            } else {
-                tooltip.append(helper.text(Component.literal(", ")));
+        var data = accessor.getServerData();
+        if (!data.contains(KEY, Tag.TAG_COMPOUND)) return;
+        var state = data.getCompound(KEY);
+        // Illegal machines hide the entire upgrade section, as configured by the owner.
+        // In either case it is never correct to present installed items as currently active.
+        if (!state.getBoolean("Legal")) return;
+        var groups = new ArrayList<UpgradeDisplay.Group<ItemStack>>();
+        var list = state.getList("Groups", Tag.TAG_COMPOUND);
+        for (int i = 0; i < Math.min(10, list.size()); i++) {
+            var entry = list.getCompound(i);
+            var stack = ItemStack.parseOptional(accessor.getLevel().registryAccess(), entry.getCompound("Item"));
+            int count = entry.getInt("Count");
+            if (!stack.isEmpty() && count > 0 && count <= 10)
+                groups.add(new UpgradeDisplay.Group<>(stack, count));
+        }
+        if (groups.isEmpty()) return;
+        var helper = IElementHelper.get();
+        tooltip.add(Component.translatable(state.getBoolean("Dependency")
+                ? "tooltip.aamoreadditions.active_upgrades" : "tooltip.aamoreadditions.upgrades"));
+        for (var row : UpgradeDisplay.rows(groups)) {
+            boolean first = true;
+            for (var group : row) {
+                // Jade smallItem renders the real ItemStack model, without a stack-count overlay.
+                var icon = helper.smallItem(group.representative());
+                if (first) {
+                    tooltip.add(icon);
+                    first = false;
+                } else {
+                    tooltip.append(helper.spacer(6, 0));
+                    tooltip.append(icon);
+                }
+                tooltip.append(helper.text(Component.literal("×" + group.count())));
             }
-            tooltip.append(helper.smallItem(s));
-            tooltip.append(helper.text(s.getHoverName()));
         }
     }
 }

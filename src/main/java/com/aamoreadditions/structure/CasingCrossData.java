@@ -116,17 +116,17 @@ public class CasingCrossData extends SavedData {
         return srv == null ? null : srv.getRecipeManager();
     }
 
-    /** Fixed Speed multipliers for this structure (highest installed tier counts; tiers need the lower ones). */
+    /** Structure-specific coefficients with the shared mode/aggregation policy. */
     public static double speedMultiplier(com.aamoreadditions.upgrade.UpgradeSlots.Handler h) {
-        double m = 1.0;
-        for (var t : h.activeUpgrades()) if (t.line == com.aamoreadditions.upgrade.UpgradeType.Line.SPEED)
-            m = switch (t.tier) { case 1 -> 1.5; case 2 -> 2.0; case 3 -> 3.0; default -> 1.0; };
-        return m;
+        return com.aamoreadditions.effect.CrossEffects.speed(h.activeUpgrades());
     }
 
     public final class Entry implements com.aamoreadditions.upgrade.SpeedOnlyHolder {
         public final com.aamoreadditions.upgrade.UpgradeSlots.Handler upgrades = new com.aamoreadditions.upgrade.UpgradeSlots.Handler(this);
-        @Override public void upgradesChanged() { setDirty(); }
+        @Override public void upgradesChanged() {
+            if (!upgrades.legal()) { processTime = 0; running = false; }
+            setDirty();
+        }
         public final BlockPos anchor;
         public final ItemStackHandler inv = new ItemStackHandler(CasingCrossData.SLOTS) {
             @Override protected void onContentsChanged(int slot) { recipeDirty = true; setDirty(); }
@@ -204,14 +204,14 @@ public class CasingCrossData extends SavedData {
             @Override public ItemStack getStackInSlot(int slot) { return inv.getStackInSlot(slot); }
             @Override public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
                 // Only slot 0 takes items, and it applies the priority rule; the other slots refuse so that a pipe iterating slots cannot bypass the order.
-                return slot == 0 ? insertByPriority(stack, simulate) : stack;
+                return upgrades.legal() && slot == 0 ? insertByPriority(stack, simulate) : stack;
             }
             @Override public ItemStack extractItem(int slot, int amount, boolean simulate) {
-                return slot == SLOT_OUTPUT ? inv.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
+                return upgrades.legal() && slot == SLOT_OUTPUT ? inv.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
             }
             @Override public int getSlotLimit(int slot) { return inv.getSlotLimit(slot); }
             @Override public boolean isItemValid(int slot, ItemStack stack) {
-                return slot == 0 && insertByPriority(stack, true).getCount() < stack.getCount();
+                return upgrades.legal() && slot == 0 && insertByPriority(stack, true).getCount() < stack.getCount();
             }
         };
 
@@ -245,6 +245,8 @@ public class CasingCrossData extends SavedData {
 
         void tick(ServerLevel level, RecipeManager rm) {
             running = false;
+            upgrades.drainOverflow(level, anchor);
+            if (!upgrades.legal()) { reset(); return; }
             if (lockRecorded() && level.getGameTime() % 20 == 0 && byId(rm, lockId) == null) { unlock(); setDirty(); }
             RecipeHolder<EmpowererRecipe> h = recipe(rm);
             if (h == null) { reset(); return; }
@@ -256,9 +258,8 @@ public class CasingCrossData extends SavedData {
             // Total per recipe stays as without upgrades (4 * (energyPerStand / baseTime) * baseTime, AA's own integer math);
             // spread over the (shorter) time so the per-tick drain rises by ~the speed multiplier. Exact split: tick p charges
             // floor(total*(p+1)/time) - floor(total*p/time), so the ticks sum to exactly `total` (no over/under-charge).
-            long total = 4L * (r.getEnergyPerStand() / baseTime) * baseTime;
-            int p0 = Math.min(processTime, time - 1);
-            long perTick = total * (p0 + 1) / time - total * p0 / time;
+            long total = com.aamoreadditions.effect.CrossUpgradeMath.totalEnergy(r.getEnergyPerStand(), baseTime);
+            long perTick = com.aamoreadditions.effect.CrossUpgradeMath.tickEnergy(total, time, processTime);
             if (perTick > Integer.MAX_VALUE || energy.getEnergyStored() < perTick) return; // not enough: pause, like AA
             energy.extractInternal((int) perTick);
             processTime++;
@@ -285,9 +286,16 @@ public class CasingCrossData extends SavedData {
         }
     }
 
-    /** Plain FE pool: external insert unlimited per call (only free space limits it), extraction internal only. */
+    /** Shared FE pool: unlimited insert; external extraction is enabled only in independent mode. */
     public final class Energy extends EnergyStorage {
-        Energy() { super(CasingCrossEnergy.capacity(), Integer.MAX_VALUE, 0); }
+        Energy() { super(CasingCrossEnergy.capacity(), Integer.MAX_VALUE, com.aamoreadditions.upgrade.UpgradeStartup.dependency() ? 0 : Integer.MAX_VALUE); }
+        @Override public boolean canExtract() { return !com.aamoreadditions.upgrade.UpgradeStartup.dependency(); }
+        @Override public int extractEnergy(int max, boolean simulate) {
+            if (com.aamoreadditions.upgrade.UpgradeStartup.dependency()) return 0;
+            int taken = Math.min(Math.max(0,max),energy);
+            if (!simulate && taken > 0) { energy -= taken; setDirty(); }
+            return taken;
+        }
         @Override public int receiveEnergy(int max, boolean sim) {
             int r = super.receiveEnergy(max, sim);
             if (r > 0 && !sim) setDirty();

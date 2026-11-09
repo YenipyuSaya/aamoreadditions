@@ -20,7 +20,9 @@ import org.spongepowered.asm.mixin.injection.At;
  * warning instead of crashing (update EXPECTED_* and the args below).
  */
 @Mixin(value = TileEntityPoweredFurnace.class, remap = false)
-public abstract class TileEntityPoweredFurnaceMixin {
+public abstract class TileEntityPoweredFurnaceMixin implements com.aamoreadditions.upgrade.UpgradeResetState {
+    @org.spongepowered.asm.mixin.Shadow private boolean lastSmelted;
+    @Override public void aamoreadditions$resetUpgradeWork() { lastSmelted = false; }
     @Unique private static final int EXPECTED_SMELT_TIME = 80, EXPECTED_ENERGY_USE = 25;
 
     static {

@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ABA",
+    "BCB",
+    "ABA"
+  ],
+  "key": {
+    "A": {
+      "item": "actuallyadditions:empowered_palis_crystal"
+    },
+    "B": {
+      "item": "actuallyadditions:empowered_emeradic_crystal"
+    },
+    "C": {
+      "item": "aamoreadditions:efficiency_upgrade_machine_1"
+    }
+  },
+  "result": {
+    "id": "aamoreadditions:efficiency_upgrade_machine_2",
+    "count": 1
+  },
+  "neoforge:conditions": [
+    {
+      "type": "aamoreadditions:independent_upgrades"
+    }
+  ]
+}

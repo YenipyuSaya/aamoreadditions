@@ -24,7 +24,9 @@ import org.spongepowered.asm.mixin.injection.At;
  * require = 0 + startup constant check: if AA changes, the effect is skipped with a warning instead of crashing.
  */
 @Mixin(value = TileEntityHeatCollector.class, remap = false)
-public abstract class TileEntityHeatCollectorMixin {
+public abstract class TileEntityHeatCollectorMixin implements com.aamoreadditions.upgrade.UpgradeResetState {
+    @org.spongepowered.asm.mixin.Shadow private int disappearTime;
+    @Override public void aamoreadditions$resetUpgradeWork() { disappearTime = 0; }
     @Unique private static final int EXPECTED_ENERGY_PRODUCE = 40;
     private static final String TICK = "serverTick(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/BlockEntity;)V";
 

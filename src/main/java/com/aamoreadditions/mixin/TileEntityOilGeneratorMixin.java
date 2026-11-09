@@ -30,6 +30,22 @@ public abstract class TileEntityOilGeneratorMixin {
         op.call(tile, value <= 0 ? value : UpgradeEffects.generatorBurnTime(tile, value));
     }
 
+    /** Gate only the original decrement write, never the base tick or later sync/FE sharing.
+     * The first currentBurnTime write is the decrement, verified against AA 1.3.26 bytecode. */
+    @WrapOperation(method=TICK,at=@At(value="FIELD",
+            target="Lde/ellpeck/actuallyadditions/mod/tile/TileEntityOilGenerator;currentBurnTime:I",opcode=Opcodes.PUTFIELD,ordinal=0))
+    private static void aamoreadditions$pauseFullBurn(TileEntityOilGenerator tile,int value,Operation<Void> original){
+        if(com.aamoreadditions.effect.OilBurnPause.mayAdvance(tile.storage.getEnergyStored(),tile.storage.getMaxEnergyStored()))
+            original.call(tile,value);
+    }
+    @WrapOperation(method=TICK,at=@At(value="INVOKE",
+            target="Lde/ellpeck/actuallyadditions/mod/tile/CustomEnergyStorage;receiveEnergyInternal(IZ)I"))
+    private static int aamoreadditions$pauseFullGeneration(de.ellpeck.actuallyadditions.mod.tile.CustomEnergyStorage storage,
+            int amount,boolean simulate,Operation<Integer> original){
+        return com.aamoreadditions.effect.OilBurnPause.mayAdvance(storage.getEnergyStored(),storage.getMaxEnergyStored())
+                ?original.call(storage,amount,simulate):0;
+    }
+
     // ---- base value overrides: AA reads these recipe getters in serverTick; replace with our configured values ----
     @WrapOperation(method = TICK, require = 0, at = @At(value = "INVOKE", target = "Lde/ellpeck/actuallyadditions/mod/crafting/LiquidFuelRecipe;getBurnTime()I"))
     private static int aamoreadditions$baseBurn(de.ellpeck.actuallyadditions.mod.crafting.LiquidFuelRecipe r, Operation<Integer> op) {

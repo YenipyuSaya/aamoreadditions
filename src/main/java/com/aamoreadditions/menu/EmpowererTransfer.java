@@ -96,6 +96,7 @@ public final class EmpowererTransfer {
         RecipeHolder<EmpowererRecipe> recipe = CasingCrossData.byId(player.level().getRecipeManager(), rl);
         if (recipe == null) return;
         CasingCrossData.Entry e = menu.entry();
+        if (!e.upgrades.legal()) return;
         ItemStack[] cur = new ItemStack[5];
         for (int s = 0; s < 5; s++) cur[s] = e.inv.getStackInSlot(s);
         Result r = simulate(player, cur, e.lockRecorded() ? e.lockId.toString() : null, e.lockMap.clone(), recipe);
