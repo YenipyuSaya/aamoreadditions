@@ -94,7 +94,7 @@ public class CasingCrossScreen extends AAScreen<CasingCrossMenu> {
         g.blit(TEXTURE, leftPos, topPos, 0, 0, 176, 93);
         // progress arrow (fill drawn from texture u=176,v=0), between work area and output slot
         int t = menu.recipeTime(), p = menu.progress();
-        if (t > 0 && p > 0) g.blit(TEXTURE, leftPos + ARROW_X, topPos + ARROW_Y, 176, 0, Math.min(ARROW_W, p * ARROW_W / t), 9);
+        if (t > 0 && p > 0) g.blit(TEXTURE, leftPos + ARROW_X, topPos + ARROW_Y, 176, 0, com.aamoreadditions.effect.UpgradeMath.energyBarHeight(p, t, ARROW_W), 9);
         renderLockGhosts(g);
         // energy bar, same look as AA's EnergyDisplay
         int bx = leftPos + BAR_X, by = topPos + BAR_Y;

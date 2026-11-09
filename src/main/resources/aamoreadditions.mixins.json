@@ -22,6 +22,11 @@
     "TileEntityLeafGeneratorMixin",
     "BlockEntitySetLevelMixin",
     "ContainerEnergizerMixin",
+    "ContainerFarmerMixin",
+    "TileEntityFarmerMixin",
+    "FarmerBehaviorCostMixin",
+    "FarmerHarvestMixin",
+    "FarmerDefaultHarvestMixin",
     "BlockPoweredFurnaceSoundMixin",
     "LevelChunkSetBlockStateMixin",
     "TileEntityBaseItemHandlerMixin",
@@ -29,12 +34,16 @@
     "TileEntityStructureDisplayMixin",
     "UpgradeMachineTickMixin",
     "UpgradeInventoryAutomationMixin",
-    "UpgradeOilAutomationMixin"
+    "UpgradeOilAutomationMixin",
+    "BlockOilGeneratorPauseMixin",
+    "BlockCoalGeneratorPauseMixin"
   ],
   "client": [
     "AbstractContainerScreenMixin",
     "RenderDisplayStandMixin",
-    "RenderEmpowererMixin"
+    "RenderEmpowererMixin",
+    "ConfigTooltipMixin",
+    "GuiFarmerRipeningMixin"
   ],
   "injectors": {
     "defaultRequire": 1

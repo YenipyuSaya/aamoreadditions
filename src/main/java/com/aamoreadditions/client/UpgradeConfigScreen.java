@@ -14,6 +14,9 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 public final class UpgradeConfigScreen {
     @SubscribeEvent
     public static void setup(FMLClientSetupEvent event) {
+        // Configured generates its own factory only when a mod has no factory.
+        // Do not silently replace that UI with NeoForge's default screen.
+        if (ModList.get().isLoaded("configured")) return;
         ModList.get().getModContainerById(AAMoreAdditions.MODID).orElseThrow()
                 .registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
     }

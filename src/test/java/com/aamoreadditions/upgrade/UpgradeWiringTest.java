@@ -54,6 +54,41 @@ class UpgradeWiringTest {
         assertTrue(s.contains("UpgradeRules.validContents(held.get(WrenchRecord.TYPE.get()).slots())"));
         assertTrue(s.contains("message.aamoreadditions.upgrades.wrong_logic"));
     }
+    @Test void independentMachineAndGuiConsumeAllInstalledLineMembers() throws Exception {
+        var slots=source("upgrade/UpgradeSlots.java");
+        assertTrue(slots.contains("UpgradeLogic.active(installed,UpgradeStartup.dependency()"));
+        assertTrue(source("upgrade/UpgradeLogic.java").contains("if (!dependency) return List.copyOf(installed)"));
+        var effects=source("effect/UpgradeEffects.java");
+        assertTrue(effects.contains("active.stream().filter(t -> t.line == line).map(t -> value.applyAsDouble(t)).toList()"));
+        assertTrue(effects.contains("case CRUSHER, CRUSHER_DOUBLE, POWERED_FURNACE -> UpgradeAggregation.processorEnergy(s,e)"));
+        assertFalse(effects.contains(".distinct()"));
+        var gui=source("client/UpgradeInfo.java");
+        assertTrue(gui.contains("var active = h.activeUpgrades()"));
+        assertTrue(gui.contains("UpgradeType.Line.SPEED).count()"));
+        assertTrue(gui.contains("UpgradeType.Line.EFFICIENCY).count()"));
+        assertTrue(gui.contains("boundaryFactors(kind,speed,efficiency,"));
+        assertTrue(gui.contains("energy = UpgradeEffects.energy(be)"));
+        for(String machine:new String[]{"Crusher","PoweredFurnace"})
+            assertTrue(source("mixin/TileEntity"+machine+"Mixin.java").contains("UpgradeEffects.energyPerTick("));
+        assertTrue(source("block/AlloyFurnaceBlockEntity.java").contains("UpgradeEffects.alloyEnergyPerTick("));
+    }
+    @Test void attachmentSyncKeepsTheHandlerReferencedByOpenMenuSlots() throws Exception {
+        var s=source("upgrade/UpgradeSlots.java");
+        assertTrue(s.contains("holder.hasData(UPGRADE_INV.get()) ? holder.getData(UPGRADE_INV.get()) : new Handler(holder, false)"));
+        assertTrue(s.contains("handler.deserializeNBT(provider, tag)"));
+        assertTrue(s.contains("activeCache = null;\n            refresh()"));
+        assertTrue(source("client/UpgradeInfoButton.java").contains("lines.get().stream()"));
+        assertTrue(source("upgrade/UpgradeMenus.java").contains("new UpgradeSlot(menu, h, i)"));
+    }
+    @Test void everyManualMutationReachesServerSyncWithoutDependingOnCapacityChanges() throws Exception {
+        var s=source("upgrade/UpgradeSlots.java");
+        assertTrue(s.contains("protected void onContentsChanged(int slot) {\n            refresh();"));
+        assertTrue(s.contains("&& be.getLevel() instanceof net.minecraft.server.level.ServerLevel) aa.sendUpdate()"));
+        assertTrue(s.contains("UpgradeRuntime.clearWork(be);\n            dirty()"));
+        assertTrue(source("upgrade/UpgradeInteraction.java").contains("h.setStackInSlot(i, ItemStack.EMPTY)"));
+        assertTrue(source("item/UpgradeWrenchItem.java").contains("handler.replaceContents(replacement)"));
+        assertTrue(source("upgrade/UpgradeMenus.java").contains("slot.set(ItemStack.EMPTY)"));
+    }
     @Test void infoUsesCoefficientsAndIndependentAffectedAttributeLines() throws Exception {
         var s=source("client/UpgradeInfo.java");assertTrue(s.contains("boundaryFactors("));
         assertTrue(s.contains("boundaryLine(lines,\"speed\",f.speed())"));assertTrue(s.contains("boundaryLine(lines,\"energy\",f.energy())"));

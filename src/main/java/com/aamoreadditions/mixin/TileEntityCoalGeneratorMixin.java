@@ -1,6 +1,7 @@
 package com.aamoreadditions.mixin;
 
 import com.aamoreadditions.effect.UpgradeEffects;
+import com.aamoreadditions.effect.OilBurnPause;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -26,7 +27,17 @@ public abstract class TileEntityCoalGeneratorMixin {
             target = "Lde/ellpeck/actuallyadditions/mod/tile/CustomEnergyStorage;receiveEnergyInternal(IZ)I"))
     private static int aamoreadditions$produce(CustomEnergyStorage storage, int amount, boolean simulate, Operation<Integer> op,
                                        @Local(argsOnly = true) BlockEntity be) {
-        return op.call(storage, UpgradeEffects.generatorOutput(be, com.aamoreadditions.effect.UpgradeConfig.coalFePerTick(amount)), simulate);
+        return OilBurnPause.mayAdvance(storage.getEnergyStored(), storage.getMaxEnergyStored())
+                ? op.call(storage, UpgradeEffects.generatorOutput(be, com.aamoreadditions.effect.UpgradeConfig.coalFePerTick(amount)), simulate) : 0;
+    }
+
+    /** Only the decrement write (ordinal 0), not fuel start or GUI/sync mirrors. */
+    @WrapOperation(method = TICK, at = @At(value = "FIELD",
+            target = "Lde/ellpeck/actuallyadditions/mod/tile/TileEntityCoalGenerator;currentBurnTime:I",
+            opcode = Opcodes.PUTFIELD, ordinal = 0))
+    private static void aamoreadditions$pauseFullBurn(TileEntityCoalGenerator tile, int value, Operation<Void> original) {
+        if (OilBurnPause.mayAdvance(tile.storage.getEnergyStored(), tile.storage.getMaxEnergyStored()))
+            original.call(tile, value);
     }
 
     @WrapOperation(method = TICK, require = 0, at = @At(value = "FIELD",

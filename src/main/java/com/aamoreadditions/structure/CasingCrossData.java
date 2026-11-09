@@ -118,14 +118,7 @@ public class CasingCrossData extends SavedData {
 
     /** Structure-specific coefficients with the shared mode/aggregation policy. */
     public static double speedMultiplier(com.aamoreadditions.upgrade.UpgradeSlots.Handler h) {
-        if (!com.aamoreadditions.upgrade.UpgradeStartup.dependency())
-            return com.aamoreadditions.effect.UpgradeAggregation.speed(h.activeUpgrades().stream()
-                    .filter(t -> t.line == com.aamoreadditions.upgrade.UpgradeType.Line.SPEED)
-                    .map(t -> switch(t.tier) { case 1 -> 1.5; case 2 -> 2.0; default -> 3.0; }).toList());
-        double m = 1.0;
-        for (var t : h.activeUpgrades()) if (t.line == com.aamoreadditions.upgrade.UpgradeType.Line.SPEED)
-            m = switch (t.tier) { case 1 -> 1.5; case 2 -> 2.0; case 3 -> 3.0; default -> 1.0; };
-        return m;
+        return com.aamoreadditions.effect.CrossEffects.speed(h.activeUpgrades());
     }
 
     public final class Entry implements com.aamoreadditions.upgrade.SpeedOnlyHolder {
@@ -265,9 +258,8 @@ public class CasingCrossData extends SavedData {
             // Total per recipe stays as without upgrades (4 * (energyPerStand / baseTime) * baseTime, AA's own integer math);
             // spread over the (shorter) time so the per-tick drain rises by ~the speed multiplier. Exact split: tick p charges
             // floor(total*(p+1)/time) - floor(total*p/time), so the ticks sum to exactly `total` (no over/under-charge).
-            long total = 4L * (r.getEnergyPerStand() / baseTime) * baseTime;
-            int p0 = Math.min(processTime, time - 1);
-            long perTick = total * (p0 + 1) / time - total * p0 / time;
+            long total = com.aamoreadditions.effect.CrossUpgradeMath.totalEnergy(r.getEnergyPerStand(), baseTime);
+            long perTick = com.aamoreadditions.effect.CrossUpgradeMath.tickEnergy(total, time, processTime);
             if (perTick > Integer.MAX_VALUE || energy.getEnergyStored() < perTick) return; // not enough: pause, like AA
             energy.extractInternal((int) perTick);
             processTime++;

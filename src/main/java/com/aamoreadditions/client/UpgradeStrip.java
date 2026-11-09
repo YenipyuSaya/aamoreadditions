@@ -55,6 +55,7 @@ public final class UpgradeStrip {
 
     /** Per-GUI x, checked against AA textures/widgets (see report). */
     static int buttonX(AbstractContainerScreen<?> screen) {
+        if (screen instanceof de.ellpeck.actuallyadditions.mod.inventory.gui.GuiFarmer) return 134; // actual frame ends at x148
         if (screen instanceof de.ellpeck.actuallyadditions.mod.inventory.gui.CrusherScreen c
                 && c.getMenu().isDouble) return 134;                                   // double crusher: inner edge x=146
         if (screen instanceof de.ellpeck.actuallyadditions.mod.inventory.gui.GuiFurnaceDouble) return 134; // inner edge x=146
@@ -62,6 +63,15 @@ public final class UpgradeStrip {
         if (screen instanceof com.aamoreadditions.client.screen.CasingCrossScreen) return com.aamoreadditions.client.screen.CasingCrossScreen.UPGRADE_BTN_X;            // same frame as double furnace
         if (screen instanceof de.ellpeck.actuallyadditions.mod.inventory.gui.GuiOilGenerator) return 104;  // fluid bar occupies x116-133
         return 124;                                                                       // crusher, coal generator: inner edge x=135
+    }
+    /** Farmer alone uses a horizontal pair: info immediately left of the toggle. */
+    static int infoX(AbstractContainerScreen<?> screen) {
+        return screen instanceof de.ellpeck.actuallyadditions.mod.inventory.gui.GuiFarmer
+                ? buttonX(screen) - UpgradeToggleButton.SIZE - 1 : buttonX(screen);
+    }
+    static int infoY(AbstractContainerScreen<?> screen) {
+        return screen instanceof de.ellpeck.actuallyadditions.mod.inventory.gui.GuiFarmer
+                ? BTN_Y : BTN_Y + UpgradeToggleButton.SIZE + 1;
     }
     public static final long ANIM_MS = 180;
 
@@ -138,16 +148,17 @@ public final class UpgradeStrip {
         for (Slot s : menu.slots) if (s instanceof UpgradeSlot u && u.handler().holder() instanceof net.minecraft.world.level.block.entity.BlockEntity b) { be = b; break; }
         if (screen.getMenu() instanceof com.aamoreadditions.menu.CasingCrossMenu cm) {
             // Empowerer structure: speed only
-            event.addListener(new UpgradeInfoButton(screen.getGuiLeft() + buttonX(screen), screen.getGuiTop() + BTN_Y + UpgradeToggleButton.SIZE + 1,
+            event.addListener(new UpgradeInfoButton(screen.getGuiLeft() + infoX(screen), screen.getGuiTop() + infoY(screen),
                     () -> {
                         var lines = new java.util.ArrayList<Component>();
                         lines.add(Component.translatable("gui.aamoreadditions.info.speed", Component.literal(UpgradeInfo.fmt(cm.speedMultiplier())).withStyle(net.minecraft.ChatFormatting.AQUA)).withStyle(net.minecraft.ChatFormatting.WHITE));
                         UpgradeInfo.appendBoundary(lines,cm.upgrades);
                         return lines;
                     }));
-        } else if (be != null && com.aamoreadditions.effect.MachineKind.of(be) != null && com.aamoreadditions.effect.MachineKind.of(be) != com.aamoreadditions.effect.MachineKind.ENERGIZER) {
+        } else if (be != null && (com.aamoreadditions.upgrade.UpgradeSlots.isFarmer(be)
+                || (com.aamoreadditions.effect.MachineKind.of(be) != null && com.aamoreadditions.effect.MachineKind.of(be) != com.aamoreadditions.effect.MachineKind.ENERGIZER))) {
             final var fbe = be;
-            event.addListener(new UpgradeInfoButton(screen.getGuiLeft() + buttonX(screen), screen.getGuiTop() + BTN_Y + UpgradeToggleButton.SIZE + 1, () -> UpgradeInfo.lines(fbe)));
+            event.addListener(new UpgradeInfoButton(screen.getGuiLeft() + infoX(screen), screen.getGuiTop() + infoY(screen), () -> UpgradeInfo.lines(fbe)));
         }
     }
 

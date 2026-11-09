@@ -26,6 +26,17 @@ public final class UpgradeInfo {
     private static MutableComponent aqua(double v) { return Component.literal(fmt(v)).withStyle(ChatFormatting.AQUA); }
 
     public static List<Component> lines(BlockEntity be) {
+        if (be instanceof TileEntityFarmer tile) {
+            var effects = com.aamoreadditions.effect.FarmerEffects.evaluate(tile);
+            return List.of(
+                    Component.translatable("gui.aamoreadditions.info.farmer.cooldown",
+                            Component.literal(String.valueOf(com.aamoreadditions.effect.FarmerScanRuntime.cooldown(tile))).withStyle(ChatFormatting.AQUA)).withStyle(ChatFormatting.WHITE),
+                    Component.translatable("gui.aamoreadditions.info.farmer.energy",
+                            aqua(effects.energy())).withStyle(ChatFormatting.WHITE),
+                    Component.translatable("gui.aamoreadditions.info.farmer.fortune",
+                            Component.literal(String.valueOf(com.aamoreadditions.effect.FarmerEffects.fortune(tile)))
+                                    .withStyle(ChatFormatting.GREEN)).withStyle(ChatFormatting.WHITE));
+        }
         var lines = new java.util.ArrayList<>(baseLines(be));
         if (be != null && com.aamoreadditions.upgrade.UpgradeSlots.supports(be))
             appendBoundary(lines, com.aamoreadditions.upgrade.UpgradeSlots.get(be));
@@ -33,6 +44,7 @@ public final class UpgradeInfo {
     }
 
     public static void appendBoundary(java.util.List<Component> lines, com.aamoreadditions.upgrade.UpgradeSlots.Handler h) {
+        if (com.aamoreadditions.upgrade.UpgradeSlots.isFarmer(h.holder())) return;
         var active = h.activeUpgrades();
         int speed = (int) active.stream().filter(t -> t.line == com.aamoreadditions.upgrade.UpgradeType.Line.SPEED).count();
         int efficiency = (int) active.stream().filter(t -> t.line == com.aamoreadditions.upgrade.UpgradeType.Line.EFFICIENCY).count();
@@ -40,6 +52,7 @@ public final class UpgradeInfo {
         if (h.holder() instanceof com.aamoreadditions.upgrade.SpeedOnlyHolder) kind = com.aamoreadditions.effect.UpgradeAggregation.Kind.CROSS;
         else {
             var machine = MachineKind.of((BlockEntity) h.holder());
+            if (machine == null) return;
             kind = switch(machine) {
                 case COAL_GENERATOR, OIL_GENERATOR -> com.aamoreadditions.effect.UpgradeAggregation.Kind.FUEL_GENERATOR;
                 case HEAT_COLLECTOR -> com.aamoreadditions.effect.UpgradeAggregation.Kind.HEAT;

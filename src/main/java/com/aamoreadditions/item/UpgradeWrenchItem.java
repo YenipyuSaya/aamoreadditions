@@ -1,15 +1,13 @@
 package com.aamoreadditions.item;
 
 import com.aamoreadditions.AAMoreAdditions;
-import com.aamoreadditions.structure.CasingCrossData;
 import com.aamoreadditions.structure.CasingCrossEvents;
-import com.aamoreadditions.structure.CasingCrossStructure;
 import com.aamoreadditions.upgrade.UpgradeRules;
 import com.aamoreadditions.upgrade.UpgradeSlots;
 import com.aamoreadditions.upgrade.WrenchPlanner;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -66,10 +64,10 @@ public final class UpgradeWrenchItem extends Item {
             var be = level.getBlockEntity(pos);
             if ((be == null || !UpgradeSlots.supports(be)) && !CasingCrossEvents.clientLooksActive(level, pos)) return;
         } else {
-            UpgradeSlots.Handler handler = target(level, pos);
+            UpgradeSlots.Handler handler = UpgradeSlots.target(level, pos);
             if (handler == null) return;
             if ((recording && !handler.legal()) || (!recording && !UpgradeRules.validContents(held.get(WrenchRecord.TYPE.get()).slots()))) {
-                player.displayClientMessage(Component.translatable("message.aamoreadditions.upgrades.wrong_logic"), true);
+                player.displayClientMessage(Component.translatable("message.aamoreadditions.upgrades.wrong_logic").withStyle(ChatFormatting.RED), true);
             } else if (recording) {
                 held.set(WrenchRecord.TYPE.get(), WrenchRecord.capture(handler.contents()));
                 player.displayClientMessage(Component.translatable("message.aamoreadditions.upgrade_wrench.recorded"), true);
@@ -83,16 +81,6 @@ public final class UpgradeWrenchItem extends Item {
         // an unrecorded wrench keep the original block/item interaction untouched.
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.sidedSuccess(level.isClientSide));
-    }
-
-    private static UpgradeSlots.Handler target(Level level, BlockPos pos) {
-        if (level instanceof ServerLevel server) {
-            var entry = CasingCrossData.get(server).entryAt(pos);
-            var anchor = CasingCrossData.get(server).anchorOf(pos);
-            if (entry != null && anchor != null && CasingCrossStructure.matches(level, anchor)) return entry.upgrades;
-        }
-        var be = level.getBlockEntity(pos);
-        return be != null && UpgradeSlots.supports(be) ? UpgradeSlots.get(be) : null;
     }
 
     private static Item item(ItemStack stack) { return stack.isEmpty() ? null : stack.getItem(); }

@@ -22,7 +22,7 @@ public class CasingCrossMenu extends AbstractContainerMenu {
     public final com.aamoreadditions.upgrade.UpgradeSlots.Handler upgrades;
     public double speedMultiplier() { return CasingCrossData.speedMultiplier(upgrades); }
     private final CasingCrossData.Entry entry; // null on the client
-    private final ContainerData data; // 0/1 energy low/high 16 bits, 2 progress, 3 recipe time (DataSlots sync as shorts)
+    private final ContainerData data; // 0/1 energy words, 2/7 progress words, 3/8 recipe-time words (DataSlots sync as shorts)
     private final net.minecraft.world.item.crafting.RecipeManager recipes;
 
     public CasingCrossMenu(int id, Inventory inv, BlockPos anchor, CasingCrossData.Entry entry) {
@@ -40,11 +40,14 @@ public class CasingCrossMenu extends AbstractContainerMenu {
                 return switch (i) {
                     case 0 -> e & 0xFFFF;
                     case 1 -> (e >>> 16) & 0xFFFF;
-                    case 2 -> Math.min(entry.processTime, Short.MAX_VALUE);
-                    case 3 -> Math.min(entry.recipeTime, Short.MAX_VALUE);
+                    case 2 -> entry.processTime & 0xFFFF;
+                    case 3 -> entry.recipeTime & 0xFFFF;
                     case 4 -> (entry.locked ? 1 : 0) | (entry.lockRecorded() ? 2 : 0);
                     case 5 -> lockIndex();
-                    default -> packMap(entry.lockMap);
+                    case 6 -> packMap(entry.lockMap);
+                    case 7 -> (entry.processTime >>> 16) & 0xFFFF;
+                    case 8 -> (entry.recipeTime >>> 16) & 0xFFFF;
+                    default -> 0;
                 };
             }
             @Override public void set(int i, int v) {}
@@ -77,7 +80,7 @@ public class CasingCrossMenu extends AbstractContainerMenu {
     }
 
     // ---- recipe lock sync: data 4 = flags (1 locked, 2 recorded), 5 = index into id-sorted empowering recipes, 6 = slot map (3 bits per slot) ----
-    public static final int DATA = 7, BUTTON_LOCK = 7710;
+    public static final int DATA = 9, BUTTON_LOCK = 7710;
 
     private int lockIndex() {
         if (!entry.lockRecorded()) return -1;
@@ -135,8 +138,8 @@ public class CasingCrossMenu extends AbstractContainerMenu {
 
     public int energy() { return (data.get(0) & 0xFFFF) | ((data.get(1) & 0xFFFF) << 16); }
     public int capacity() { return com.aamoreadditions.structure.CasingCrossEnergy.capacity(); }
-    public int progress() { return data.get(2); }
-    public int recipeTime() { return data.get(3); }
+    public int progress() { return (data.get(2) & 0xFFFF) | ((data.get(7) & 0xFFFF) << 16); }
+    public int recipeTime() { return (data.get(3) & 0xFFFF) | ((data.get(8) & 0xFFFF) << 16); }
 
     public CasingCrossData.Entry entry() { return entry; }
 

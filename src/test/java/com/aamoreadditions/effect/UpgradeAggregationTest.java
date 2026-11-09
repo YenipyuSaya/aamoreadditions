@@ -35,10 +35,10 @@ class UpgradeAggregationTest {
         assertEquals(6, UpgradeAggregation.processorSpeedEnergy(List.of(1.5,2.0,2.5)), EPS);
     }
     @Test void fiveEfficiencyIIProcessingEnergyUsesProductAndPenalty() {
-        assertEquals(0.0625, UpgradeAggregation.processorEfficiencyEnergy(repeat(5, 0.5)), EPS);
+        assertEquals(0.040625, UpgradeAggregation.processorEfficiencyEnergy(repeat(5, 0.5)), EPS);
     }
     @Test void efficiencyProcessingLossCapsAtThree() {
-        assertEquals(Math.pow(0.8,10) * 2.5,
+        assertEquals(Math.pow(0.8,10) * 1.45,
                 UpgradeAggregation.processorEfficiencyEnergy(repeat(10, 0.8)), EPS);
     }
     @Test void fiveSpeedICoalExampleDoesNotHardcodeMachineBaseRate() {
@@ -91,7 +91,7 @@ class UpgradeAggregationTest {
         assertEquals(120, UpgradeMath.energyPerTick(40, energy, speed));
     }
     @Test void mixedProcessingPenaltiesRemainMultiplicative() {
-        assertEquals((4 * 2.0 * 1.1) * (Math.pow(0.5,4) * 1.5),
+        assertEquals((4 * 2.0 * 1.1) * (Math.pow(0.5,4) * 1.15),
                 UpgradeAggregation.processorEnergy(repeat(4,2),repeat(4,0.5)),EPS);
     }
     @Test void emptyMixedProcessorLinesRemainBaseCost() {
@@ -126,7 +126,7 @@ class UpgradeAggregationTest {
     }
     @Test void processorEnergyBoundaryCombinesBothKindsOfPenalty() {
         var f=UpgradeAggregation.boundaryFactors(UpgradeAggregation.Kind.PROCESSOR,4,4,false);
-        assertEquals(0.9,f.speed(),EPS);assertEquals(1.65,f.energy(),EPS);assertEquals(1,f.utilization(),EPS);
+        assertEquals(0.9,f.speed(),EPS);assertEquals(1.265,f.energy(),EPS);assertEquals(1,f.utilization(),EPS);
     }
     @Test void boundaryCoefficientOneMeansNoDisplayedPenalty() {
         for(var kind:UpgradeAggregation.Kind.values()){
@@ -139,6 +139,78 @@ class UpgradeAggregationTest {
             var f=UpgradeAggregation.boundaryFactors(kind,5,5,true);
             assertEquals(1,f.speed(),EPS);assertEquals(1,f.energy(),EPS);assertEquals(1,f.utilization(),EPS);
         }
+    }
+    @Test void mixedGradesCountTogetherAfterIndependentSelection() {
+        var installed = List.of(
+                new com.aamoreadditions.upgrade.UpgradeLogic.Plugin("SPEED",1),
+                new com.aamoreadditions.upgrade.UpgradeLogic.Plugin("SPEED",2),
+                new com.aamoreadditions.upgrade.UpgradeLogic.Plugin("SPEED",3),
+                new com.aamoreadditions.upgrade.UpgradeLogic.Plugin("SPEED",1),
+                new com.aamoreadditions.upgrade.UpgradeLogic.Plugin("EFFICIENCY",1),
+                new com.aamoreadditions.upgrade.UpgradeLogic.Plugin("EFFICIENCY",2),
+                new com.aamoreadditions.upgrade.UpgradeLogic.Plugin("EFFICIENCY",1),
+                new com.aamoreadditions.upgrade.UpgradeLogic.Plugin("EFFICIENCY",2));
+        var active = com.aamoreadditions.upgrade.UpgradeLogic.active(installed,false,
+                com.aamoreadditions.upgrade.UpgradeLogic.Plugin::line,
+                com.aamoreadditions.upgrade.UpgradeLogic.Plugin::tier);
+        var speed = active.stream().filter(p -> p.line().equals("SPEED")).toList();
+        var efficiency = active.stream().filter(p -> p.line().equals("EFFICIENCY")).toList();
+        assertEquals(8,active.size()); assertEquals(4,speed.size()); assertEquals(4,efficiency.size());
+        assertEquals(1,UpgradeAggregation.boundaryLayers(speed.size()));
+        assertEquals(1,UpgradeAggregation.boundaryLayers(efficiency.size()));
+        var speedCoefficients = speed.stream().map(p -> switch(p.tier()) { case 1 -> 2.0; case 2 -> 3.0; default -> 5.0; }).toList();
+        var speedEnergy = speed.stream().map(p -> switch(p.tier()) { case 1 -> 1.5; case 2 -> 2.0; default -> 2.5; }).toList();
+        var efficiencyEnergy = efficiency.stream().map(p -> p.tier()==1 ? 0.8 : 0.5).toList();
+        assertEquals(10.8,UpgradeAggregation.speed(speedCoefficients),EPS);
+        assertEquals(0.184,UpgradeAggregation.processorEfficiencyEnergy(efficiencyEnergy),EPS);
+        assertEquals(1.518,UpgradeAggregation.processorEnergy(speedEnergy,efficiencyEnergy),EPS);
+        var factors=UpgradeAggregation.boundaryFactors(UpgradeAggregation.Kind.PROCESSOR,speed.size(),efficiency.size(),false);
+        assertEquals(0.9,factors.speed(),EPS); assertEquals(1.265,factors.energy(),EPS);
+    }
+    @Test void countsOfDifferentLinesDoNotTriggerEachOthersBoundary() {
+        // Six plugins in total, but only three on either line: neither line loses anything.
+        var speed=List.of(2.0,3.0,5.0);
+        var efficiency=List.of(0.8,0.5,0.8);
+        assertEquals(10,UpgradeAggregation.speed(speed),EPS);
+        assertEquals(0.32,UpgradeAggregation.processorEfficiencyEnergy(efficiency),EPS);
+        var f=UpgradeAggregation.boundaryFactors(UpgradeAggregation.Kind.PROCESSOR,speed.size(),efficiency.size(),false);
+        assertEquals(1,f.speed(),EPS); assertEquals(1,f.energy(),EPS);
+    }
+    @Test void mixedGradeLineCountsCapAtThreeLayersThroughTenSlots() {
+        for(int count=6;count<=10;count++) {
+            var speed=java.util.stream.IntStream.range(0,count).mapToObj(i -> switch(i%3) { case 0 -> 2.0; case 1 -> 3.0; default -> 5.0; }).toList();
+            var efficiency=java.util.stream.IntStream.range(0,count).mapToObj(i -> i%2==0 ? 0.8 : 0.5).toList();
+            assertEquals(3,UpgradeAggregation.boundaryLayers(count));
+            assertEquals(speed.stream().mapToDouble(Double::doubleValue).sum()*0.7,UpgradeAggregation.speed(speed),EPS);
+            assertEquals(efficiency.stream().reduce(1.0,(a,b)->a*b)*1.45,UpgradeAggregation.processorEfficiencyEnergy(efficiency),EPS);
+            assertEquals(0.7,UpgradeAggregation.boundaryFactors(UpgradeAggregation.Kind.PROCESSOR,count,0,false).speed(),EPS);
+            assertEquals(1.45,UpgradeAggregation.boundaryFactors(UpgradeAggregation.Kind.PROCESSOR,0,count,false).energy(),EPS);
+        }
+    }
+    @Test void removingLastSpeedPluginReturnsSpeedAndEnergyToBase() {
+        var installed=new java.util.ArrayList<com.aamoreadditions.upgrade.UpgradeLogic.Plugin>();
+        installed.add(new com.aamoreadditions.upgrade.UpgradeLogic.Plugin("SPEED",1));
+        assertEquals(2,UpgradeAggregation.speed(List.of(2.0)),EPS);
+        installed.clear();
+        var active=com.aamoreadditions.upgrade.UpgradeLogic.active(installed,false,
+                com.aamoreadditions.upgrade.UpgradeLogic.Plugin::line,com.aamoreadditions.upgrade.UpgradeLogic.Plugin::tier);
+        assertTrue(active.isEmpty());
+        assertEquals(1,UpgradeAggregation.speed(List.of()),EPS);
+        assertEquals(1,UpgradeAggregation.processorEnergy(List.of(),List.of()),EPS);
+    }
+    @Test void removingSpeedDoesNotLeaveItsEffectWhenEfficiencyStillInstalled() {
+        var installed=new java.util.ArrayList<>(List.of(
+                new com.aamoreadditions.upgrade.UpgradeLogic.Plugin("SPEED",2),
+                new com.aamoreadditions.upgrade.UpgradeLogic.Plugin("EFFICIENCY",2)));
+        installed.removeIf(p->p.line().equals("SPEED"));
+        var active=com.aamoreadditions.upgrade.UpgradeLogic.active(installed,false,
+                com.aamoreadditions.upgrade.UpgradeLogic.Plugin::line,com.aamoreadditions.upgrade.UpgradeLogic.Plugin::tier);
+        assertEquals(1,active.size());assertEquals("EFFICIENCY",active.getFirst().line());
+        var speed=active.stream().filter(p->p.line().equals("SPEED")).map(p->3.0).toList();
+        var efficiency=active.stream().filter(p->p.line().equals("EFFICIENCY")).map(p->0.5).toList();
+        assertEquals(1,UpgradeAggregation.speed(speed),EPS);
+        assertEquals(0.5,UpgradeAggregation.processorEnergy(speed,efficiency),EPS);
+        assertEquals(20,UpgradeMath.energyPerTick(40,UpgradeAggregation.processorEnergy(speed,efficiency),UpgradeAggregation.speed(speed)));
     }
     @Test void negativeCountsAreRejected() {
         assertThrows(IllegalArgumentException.class,()->UpgradeAggregation.boundaryLayers(-1));

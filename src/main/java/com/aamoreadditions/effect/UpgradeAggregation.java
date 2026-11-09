@@ -64,12 +64,12 @@ public final class UpgradeAggregation {
         return sumOrBase(coefficients);
     }
 
-    public enum Kind { PROCESSOR, FUEL_GENERATOR, HEAT, LEAF, CROSS, ENERGIZER }
+    public enum Kind { PROCESSOR, FUEL_GENERATOR, HEAT, LEAF, CROSS, ENERGIZER, FARMER }
 
     // The machine formulas and info UI use the very same boundary factors.
     private static double speedBoundary(int count) { return 1 - 0.1 * boundaryLayers(count); }
     private static double processorSpeedEnergyBoundary(int count) { return 1 + 0.1 * boundaryLayers(count); }
-    private static double processorEfficiencyEnergyBoundary(int count) { return 1 + 0.5 * boundaryLayers(count); }
+    private static double processorEfficiencyEnergyBoundary(int count) { return 1 + 0.15 * boundaryLayers(count); }
     private static double generatorSpeedUtilizationBoundary(int count) { return 1 - 0.05 * boundaryLayers(count); }
     private static double generatorEfficiencyUtilizationBoundary(int count) { return 1 - 0.1 * boundaryLayers(count); }
 
@@ -79,6 +79,7 @@ public final class UpgradeAggregation {
         if (dependency) return new BoundaryFactors(1,1,1);
         return switch(kind) {
             case PROCESSOR -> new BoundaryFactors(speedBoundary(speedCount),processorSpeedEnergyBoundary(speedCount)*processorEfficiencyEnergyBoundary(efficiencyCount),1);
+            case FARMER -> new BoundaryFactors(1,processorSpeedEnergyBoundary(speedCount)*processorEfficiencyEnergyBoundary(efficiencyCount),1);
             case FUEL_GENERATOR -> new BoundaryFactors(speedBoundary(speedCount),1,generatorSpeedUtilizationBoundary(speedCount)*generatorEfficiencyUtilizationBoundary(efficiencyCount));
             case HEAT, CROSS -> new BoundaryFactors(speedBoundary(speedCount),1,1);
             case LEAF, ENERGIZER -> new BoundaryFactors(1,1,1);

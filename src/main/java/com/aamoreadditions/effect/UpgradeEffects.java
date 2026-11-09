@@ -21,6 +21,7 @@ public final class UpgradeEffects {
     }
 
     public static double speed(BlockEntity be) {
+        if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer t) return FarmerEffects.evaluate(t).speed();
         MachineKind m = MachineKind.of(be);
         if (m == null || !be.hasData(UpgradeSlots.UPGRADE_INV)) return 1.0;
         if (!com.aamoreadditions.upgrade.UpgradeStartup.dependency())
@@ -31,6 +32,7 @@ public final class UpgradeEffects {
     }
 
     public static double energy(BlockEntity be) {
+        if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer t) return FarmerEffects.evaluate(t).energy();
         MachineKind m = MachineKind.of(be);
         if (m == null || !be.hasData(UpgradeSlots.UPGRADE_INV)) return 1.0;
         if (!com.aamoreadditions.upgrade.UpgradeStartup.dependency()) {
@@ -50,6 +52,7 @@ public final class UpgradeEffects {
 
     /** Takes the active set directly: called from the handler itself (also during attachment deserialization). */
     public static double capacity(BlockEntity be, java.util.List<UpgradeType> active) {
+        if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer) return FarmerEffects.evaluate(active).capacity();
         MachineKind m = MachineKind.of(be);
         if (m == null) return 1.0;
         java.util.List<Double> mults = new java.util.ArrayList<>(2);
@@ -67,6 +70,7 @@ public final class UpgradeEffects {
         if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityHeatCollector t) return t.storage;
         if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityLeafGenerator t) return t.storage;
         if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityEnergizer t) return t.storage;
+        if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer t) return t.storage;
         return null;
     }
 

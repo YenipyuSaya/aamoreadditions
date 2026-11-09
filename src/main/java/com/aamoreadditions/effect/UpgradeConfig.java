@@ -5,10 +5,11 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
- * Server config (config/aamoreadditions-server.toml): one [machine.upgrade] section per pair, values are plain multipliers
- * applied on top of AA's current values at runtime.
+ * Server config: supported [machine.upgrade] sections contain only consumed effects,
+ * as plain multipliers applied on top of AA's current values at runtime.
  */
 public final class UpgradeConfig {
     public static final ModConfigSpec SPEC;
@@ -16,11 +17,21 @@ public final class UpgradeConfig {
     private static final ModConfigSpec.IntValue COAL_FE, HEAT_FE, LEAF_FE, RX_CRUSHER, RX_CRUSHER_DOUBLE, RX_FURNACE, RX_ENERGIZER, TX_COAL, TX_HEAT, TX_OIL, TX_LEAF, CRUSHER_FE, CRUSHER_DOUBLE_FE, FURNACE_FE, ALLOY_FE, ALLOY_EXTRA_FE, ALLOY_CAPACITY, ALLOY_RX;
     /** Oil fuels: fluid id -> {burn_ticks, total_fe, mb_per_use}. */
     private static final Map<String, ModConfigSpec.IntValue[]> OIL = new java.util.LinkedHashMap<>();
+    private static final ModConfigSpec.DoubleValue[] CROSS_SPEED = new ModConfigSpec.DoubleValue[3];
     private static final Map<MachineKind, Map<UpgradeType, Entry>> VALUES = new EnumMap<>(MachineKind.class);
 
-    public record Entry(ModConfigSpec.DoubleValue speed, ModConfigSpec.DoubleValue energy, ModConfigSpec.DoubleValue capacity,
-                        ModConfigSpec.DoubleValue inputRate, ModConfigSpec.DoubleValue outputRate,
-                        ModConfigSpec.BooleanValue preventsLava, ModConfigSpec.DoubleValue cooldown) {}
+    /** Unsupported effects have fixed neutral suppliers, not registered config values or nulls. */
+    public record Entry(Supplier<Double> speed, Supplier<Double> energy, Supplier<Double> capacity,
+                        Supplier<Double> inputRate, Supplier<Double> outputRate,
+                        Supplier<Boolean> preventsLava, Supplier<Double> cooldown) {}
+    private static final Supplier<Double> ONE = () -> 1.0;
+    private static final Supplier<Boolean> FALSE = () -> false;
+    private static final Entry NEUTRAL = new Entry(ONE, ONE, ONE, ONE, ONE, FALSE, ONE);
+
+    private static final ModConfigSpec.BooleanValue FARMER_SMART_SLEEP;
+    private static final ModConfigSpec.BooleanValue FARMER_ACCELERATES_RIPENING;
+    public static boolean farmerAcceleratesRipening(){return !SPEC.isLoaded() || FARMER_ACCELERATES_RIPENING.get();}
+    public static boolean farmerSmartSleep(){return !SPEC.isLoaded() || FARMER_SMART_SLEEP.get();}
 
     private static boolean isProcessor(MachineKind m) {
         return m == MachineKind.CRUSHER || m == MachineKind.CRUSHER_DOUBLE || m == MachineKind.POWERED_FURNACE;
@@ -33,14 +44,10 @@ public final class UpgradeConfig {
     /** Code defaults {speed, energy, capacity, input, output}; anything not listed = 1.0 (no effect). */
     private static double[] defaults(MachineKind m, UpgradeType t) {
         if (isProcessor(m)) { // same values for crusher, double crusher, double furnace; each has its own section
-            switch (t) {
-                case SPEED_1: return new double[]{2.0, 1.5, 1, 1, 1};
-                case SPEED_2: return new double[]{3.0, 2.0, 1, 1, 1};
-                case SPEED_3: return new double[]{5.0, 2.5, 1, 1, 1};
-                case EFFICIENCY_1: return new double[]{1, 0.8, 1.5, 10, 1};
-                case EFFICIENCY_2: return new double[]{1, 0.5, 2.0, 20, 1};
-                default: break;
-            }
+            var d = t.line == UpgradeType.Line.SPEED ? ProcessorUpgradeDefaults.speed(t.tier)
+                    : ProcessorUpgradeDefaults.efficiency(t.tier);
+            return new double[]{d.speed(), d.energy(), d.capacity(),
+                    t.line == UpgradeType.Line.EFFICIENCY ? (t.tier == 1 ? 10 : 20) : 1, 1};
         }
         if (m == MachineKind.COAL_GENERATOR || m == MachineKind.OIL_GENERATOR) { // {S, U (utilization), 1, 1, output}
             switch (t) {
@@ -93,25 +100,8 @@ public final class UpgradeConfig {
     }
 
     static {
-        ModConfigSpec.Builder b = new ModConfigSpec.Builder();
-        b.comment("Upgrade effects per machine and upgrade, as plain MULTIPLIERS on top of AA's current values (read at runtime).",
-                "Dependency mode only: the highest installed tier of each line applies; its values are the TOTAL effect at that tier.",
-                "Independent mode aggregates every installed plugin; policy and slot counts live in aamoreadditions-startup.toml (restart required).",
-                "Dependency mode: lines are MULTIPLIED together (speed = speedLine * efficiencyLine, same for energy and capacity).",
-                "All results are integers: time = max(1, round(original / speed)) ticks;",
-                "per-tick energy = max(1, ceil(original * energy * speed)) FE/t; storage/rates = max(1, round(original * mult)).",
-                "Example (crusher, 40 FE/t, 100 t): Speed III (x5, x2.5) + Efficiency II (x0.5) -> 20 t at 40*1.25*5 = 250 FE/t.",
-                "GENERATORS (coal_generator, oil_generator): speed_multiplier S multiplies FE produced per tick (max(1, round(FE*S)))",
-                "and divides the burn time; energy_multiplier is the UTILIZATION U: burn = max(1, round(original / S * U)).",
-                "Example coal: 20 FE/t, 1600 t -> S=2, U=0.9: 40 FE/t for 720 t (28800 FE per coal instead of 32000).",
-                "Efficiency on generators: U multiplies with the speed line's U (burn = orig / S * U_speed * U_eff); FE/t and output limit unaffected.",
-                "Example coal: Speed III + Efficiency II -> 100 FE/t for 1600/5*0.75*2 = 480 t (48000 FE).",
-                "output_rate_multiplier: generators' FE output limit (maxExtract), highest SPEED tier only.",
-                "HEAT COLLECTOR: speed_multiplier only multiplies FE/t (40 -> round(40*S)); energy_multiplier is unused;",
-                "capacity_multiplier = storage; prevents_lava_consumption stops the random lava/magma removal.",
-                "LEAF GENERATOR: cooldown_multiplier (speed line) scales AA's cooldown: max(1, round(cooldown * value));",
-                "energy_multiplier (efficiency line) scales FE per leaf: max(1, round(FE * value)); speed_multiplier is unused.");
-        b.comment("Base values replacing AA's generator values at runtime (AA's code/config untouched). Upgrade multipliers apply on top.").push("base_values");
+        ModConfigSpec.Builder b = new com.aamoreadditions.config.EnglishConfigBuilder();
+        b.push("base_values");
         CRUSHER_FE = b.comment("Crusher FE/t while crushing (AA: 40).").defineInRange("crusher_fe_per_tick", 40, 1, 1000000);
         CRUSHER_DOUBLE_FE = b.comment("Double crusher FE/t PER LANE (AA: 40; both lanes running = 2x).").defineInRange("crusher_double_fe_per_tick", 50, 1, 1000000);
         FURNACE_FE = b.comment("Powered (double) furnace FE/t PER LANE (AA: 25; both lanes = 2x).").defineInRange("powered_furnace_fe_per_tick", 30, 1, 1000000);
@@ -131,7 +121,7 @@ public final class UpgradeConfig {
         COAL_FE = b.comment("Coal generator FE/t (AA: 20). Burn times unchanged.").defineInRange("coal_generator_fe_per_tick", 30, 1, 1000000);
         HEAT_FE = b.comment("Heat collector FE/t (AA: 40).").defineInRange("heat_collector_fe_per_tick", 80, 1, 1000000);
         LEAF_FE = b.comment("Leaf generator FE per leaf (replaces AA's leafGeneratorCPPerLeaf, default 300).").defineInRange("leaf_generator_fe_per_leaf", 500, 1, 100000000);
-        b.comment("Oil generator fuels: FE/t = total_fe / burn_ticks (integer division, as AA). Fuels not listed keep their recipe values.").push("oil_generator");
+        b.push("oil_generator");
         for (Object[] f : new Object[][]{{"canola_oil", 100, 4000}, {"refined_canola_oil", 120, 9600}, {"crystallized_oil", 280, 56000}, {"empowered_oil", 400, 140000}}) {
             b.push((String) f[0]);
             OIL.put("actuallyadditions:" + f[0], new ModConfigSpec.IntValue[]{
@@ -143,37 +133,64 @@ public final class UpgradeConfig {
         b.pop().pop();
         LEAF_IDLE_SLEEP = b.comment("Leaf generator: when a scan finds no leaves, skip scanning for this many ticks (0 = off). Applies regardless of upgrades.")
                 .defineInRange("leaf_generator_idle_sleep_ticks", 100, 0, 72000);
+        FARMER_SMART_SLEEP = b.comment("Enable Farmer smart sleep: after a complete normal-speed round finds no processable mature harvest, check one cell every 20 ticks. Capacity uses actual harvest drops, not empty slots; individual rejected crops do not slow an unfinished round. A mature harvest whose drops fit or successful planting restores normal cooldown. Disabling clears sleep; cheap harvest filtering remains enabled.")
+                .define("farmer_smart_sleep", true);
+        FARMER_ACCELERATES_RIPENING = b.comment("Enable the Farmer growth-ring slot and independent ripening loop. Disabling hides the slot and arrow, stops charging and ripening, and keeps the stored ring until re-enabled.")
+                .define("farmer_accelerates_ripening", true);
         for (MachineKind m : MachineKind.values()) {
             b.push(m.key);
             Map<UpgradeType, Entry> map = new EnumMap<>(UpgradeType.class);
             for (UpgradeType t : UpgradeType.values()) {
+                // Energizers cannot accept speed plugins in either mode. Keep a neutral runtime
+                // entry for safe generic lookups, but do not create an empty config category.
+                if (m == MachineKind.ENERGIZER && t.line == UpgradeType.Line.SPEED) {
+                    map.put(t, NEUTRAL);
+                    continue;
+                }
                 double[] d = defaults(m, t);
+                boolean speedLine = t.line == UpgradeType.Line.SPEED;
                 b.push(t.id);
                 map.put(t, new Entry(
-                        b.comment("Processing speed; time = original / value.").defineInRange("speed_multiplier", d[0], 0.01, 100000.0),
-                        b.comment("Processing machines: TOTAL energy per operation (0 allowed; per-tick use never drops below 1 FE/t).", "Generators: UTILIZATION, multiplies the burn time per fuel after the speed division.").defineInRange("energy_multiplier", d[1], 0.0, 100000.0),
+                        m != MachineKind.LEAF_GENERATOR && m != MachineKind.ENERGIZER
+                                ? b.comment("Processing speed; time = original / value.").defineInRange("speed_multiplier", d[0], 0.01, 100000.0) : ONE,
+                        m != MachineKind.HEAT_COLLECTOR && m != MachineKind.ENERGIZER
+                                ? b.comment("Processing machines: TOTAL energy per operation (0 allowed; per-tick use never drops below 1 FE/t).", "Generators: UTILIZATION, multiplies the burn time per fuel after the speed division.").defineInRange("energy_multiplier", d[1], 0.0, 100000.0) : ONE,
                         b.comment("Max energy storage; stored energy is clamped when it drops.").defineInRange("capacity_multiplier", d[2], 0.01, 100000.0),
-                        b.comment("Hidden effect: external FE receive limit (AA's original maxReceive).",
+                        !isGenerator(m) && !speedLine ? b.comment("Hidden effect: external FE receive limit (AA's original maxReceive).",
                                 "Dependency mode only: highest EFFICIENCY tier counts. Independent mode uses unlimited I/O.")
-                                .defineInRange("input_rate_multiplier", d[3], 0.01, 100000.0),
-                        b.comment("Dependency mode: generators' FE output limit, highest SPEED tier. Independent mode uses unlimited I/O.")
-                                .defineInRange("output_rate_multiplier", d[4], 0.01, 100000.0),
-                        b.comment("Heat collector only: while this upgrade is installed, surrounding lava/magma is never consumed.")
-                                .define("prevents_lava_consumption", m == MachineKind.HEAT_COLLECTOR && t.line == UpgradeType.Line.EFFICIENCY),
-                        b.comment("Dependency mode: leaf cooldown multiplier of highest SPEED tier. Independent mode uses installed speed plugin count.")
-                                .defineInRange("cooldown_multiplier", cooldownDefault(m, t), 0.0, 1000.0)));
+                                .defineInRange("input_rate_multiplier", d[3], 0.01, 100000.0) : ONE,
+                        isGenerator(m) && speedLine ? b.comment("Dependency mode: generators' FE output limit, highest SPEED tier. Independent mode uses unlimited I/O.")
+                                .defineInRange("output_rate_multiplier", d[4], 0.01, 100000.0) : ONE,
+                        m == MachineKind.HEAT_COLLECTOR ? b.comment("Heat collector only: while this upgrade is installed, surrounding lava/magma is never consumed.")
+                                .define("prevents_lava_consumption", m == MachineKind.HEAT_COLLECTOR && t.line == UpgradeType.Line.EFFICIENCY) : FALSE,
+                        m == MachineKind.LEAF_GENERATOR && speedLine ? b.comment("Dependency mode: leaf cooldown multiplier of highest SPEED tier. Independent mode uses installed speed plugin count.")
+                                .defineInRange("cooldown_multiplier", cooldownDefault(m, t), 0.0, 1000.0) : ONE));
                 b.pop();
             }
             VALUES.put(m, map);
             b.pop();
         }
+        b.push("casing_cross");
+        for (UpgradeType t : UpgradeType.values()) if (t.line == UpgradeType.Line.SPEED) {
+            b.push(t.id);
+            CROSS_SPEED[t.tier - 1] = b.comment("Casing Cross processing speed. Dependency mode uses the highest active tier; independent mode sums all speed plugins and applies its speed boundary loss. Total recipe FE is unchanged.")
+                    .defineInRange("speed_multiplier", CrossUpgradeMath.defaultSpeed(t.tier), 0.01, 100000.0);
+            b.pop();
+        }
+        b.pop();
         SPEC = b.build();
     }
 
     private UpgradeConfig() {}
 
     private static Entry e(MachineKind m, UpgradeType t) {
-        return VALUES.get(m).get(t);
+        var machine = VALUES.get(m);
+        return machine == null ? NEUTRAL : machine.getOrDefault(t, NEUTRAL);
+    }
+
+    public static double crossSpeed(int tier) {
+        if (tier < 1 || tier > 3) return 1.0;
+        return SPEC.isLoaded() ? CROSS_SPEED[tier - 1].get() : CrossUpgradeMath.defaultSpeed(tier);
     }
 
     public static double speed(MachineKind m, UpgradeType t) { return SPEC.isLoaded() ? e(m, t).speed().get() : 1.0; }

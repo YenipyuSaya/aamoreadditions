@@ -207,3 +207,6 @@ idea {
 test {
     useJUnitPlatform()
 }
+
+// Spec/correction unit tests use NeoForge config APIs in-memory, without launching a game or server.
+neoForge.addModdingDependenciesTo(sourceSets.test)

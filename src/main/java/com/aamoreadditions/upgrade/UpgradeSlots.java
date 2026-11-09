@@ -36,7 +36,18 @@ public final class UpgradeSlots {
 
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, AAMoreAdditions.MODID);
     public static final Supplier<AttachmentType<Handler>> UPGRADE_INV = ATTACHMENTS.register("upgrades",
-            () -> AttachmentType.serializable(Handler::new).build());
+            () -> AttachmentType.builder(Handler::new).serialize(new net.neoforged.neoforge.attachment.IAttachmentSerializer<CompoundTag, Handler>() {
+                @Override public Handler read(IAttachmentHolder holder, CompoundTag tag, HolderLookup.Provider provider) {
+                    // AA's SYNC tag also deserializes attachments. Keep the handler held
+                    // by open menu slots, rather than replacing it with a second cache.
+                    Handler handler = holder.hasData(UPGRADE_INV.get()) ? holder.getData(UPGRADE_INV.get()) : new Handler(holder, false);
+                    handler.deserializeNBT(provider, tag);
+                    return handler;
+                }
+                @Override public CompoundTag write(Handler handler, HolderLookup.Provider provider) {
+                    return handler.serializeNBT(provider);
+                }
+            }).build());
 
     private UpgradeSlots() {}
 
@@ -48,7 +59,21 @@ public final class UpgradeSlots {
                 || be instanceof TileEntityOilGenerator
                 || be instanceof TileEntityHeatCollector
                 || be instanceof TileEntityLeafGenerator
-                || be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityEnergizer;
+                || be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityEnergizer
+                || be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer;
+    }
+
+    /** Shared target resolution for the wrench and server-side inspection (including Cross parts). */
+    public static Handler target(Level level, net.minecraft.core.BlockPos pos) {
+        if (level instanceof net.minecraft.server.level.ServerLevel server) {
+            var data = com.aamoreadditions.structure.CasingCrossData.get(server);
+            var entry = data.entryAt(pos);
+            var anchor = data.anchorOf(pos);
+            if (entry != null && anchor != null
+                    && com.aamoreadditions.structure.CasingCrossStructure.matches(level, anchor)) return entry.upgrades;
+        }
+        var be = level.getBlockEntity(pos);
+        return be != null && supports(be) ? get(be) : null;
     }
 
     /** Counts come from the restart-frozen, server-authoritative startup snapshot. */
@@ -56,8 +81,14 @@ public final class UpgradeSlots {
         return UpgradeStartup.slots(holder);
     }
 
+    /** Farmer has special scan/loot behavior but uses the same slot/rule/storage policy. */
+    public static boolean isFarmer(Object holder) {
+        return holder instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer;
+    }
+
     /** Energizer accepts only the efficiency line. */
     public static boolean allows(Object holder, UpgradeType t) {
+        if (isFarmer(holder)) return t != null;
         if (holder instanceof SpeedOnlyHolder) return t != null && t.line == UpgradeType.Line.SPEED;
         return !(holder instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityEnergizer) || (t != null && t.line == UpgradeType.Line.EFFICIENCY);
     }
@@ -84,7 +115,12 @@ public final class UpgradeSlots {
     public static class Handler extends ItemStackHandler {
         private final Object holder;
 
-        public Handler(Object holder) {
+        public Handler(Object holder) { this(holder, true); }
+
+        /** During NBT load, restore the saved plugins BEFORE applying/clamping capacity.
+         * AA has already read stored FE by this point; an empty-slot constructor refresh
+         * would incorrectly cut upgraded energy to the bare machine capacity. */
+        private Handler(Object holder, boolean initializeEffects) {
             super(slotCount(holder));
             this.holder = holder;
             // Capture AA's original capacity before any upgrade changes it.
@@ -93,7 +129,7 @@ public final class UpgradeSlots {
             this.baseCapacity = base != null ? base.aamoreadditions$baseCapacity() : -1;
             this.baseMaxExtract = base != null ? base.aamoreadditions$baseMaxExtract() : -1;
             this.baseMaxReceive = base != null ? base.aamoreadditions$baseMaxReceive() : -1;
-            refresh(); // apply configured base caps even with no upgrades installed
+            if (initializeEffects) refresh(); // fresh empty machines still apply configured base caps
         }
 
         private java.util.List<UpgradeType> activeCache;
@@ -142,7 +178,16 @@ public final class UpgradeSlots {
             }
         }
         public void dirty() {
-            if (holder instanceof BlockEntity be) be.setChanged();
+            if (holder instanceof BlockEntity be) {
+                be.setChanged();
+                if (isFarmer(be) && be.getLevel() instanceof net.minecraft.server.level.ServerLevel)
+                    ((FarmerWorkState)be).aamoreadditions$resetFarmerScan();
+                if(isFarmer(be) && be.getLevel() instanceof net.minecraft.server.level.ServerLevel)
+                    com.aamoreadditions.farmer.FarmerRingInventory.get((de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer)be).clock.reset();
+                // Speed-only edits do not necessarily change any AA-synced energy field.
+                if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityBase aa
+                        && be.getLevel() instanceof net.minecraft.server.level.ServerLevel) aa.sendUpdate();
+            }
             if (holder instanceof SpeedOnlyHolder h) h.upgradesChanged();
         }
         @Override public CompoundTag serializeNBT(HolderLookup.Provider provider) {
@@ -202,8 +247,7 @@ public final class UpgradeSlots {
         protected void onContentsChanged(int slot) {
             refresh();
             if (holder instanceof BlockEntity be && !legal()) UpgradeRuntime.clearWork(be);
-            if (holder instanceof BlockEntity be) be.setChanged();
-            if (holder instanceof SpeedOnlyHolder h) h.upgradesChanged();
+            dirty();
         }
     }
 }

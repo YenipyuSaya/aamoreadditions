@@ -19,6 +19,8 @@ public class BlockContainerBaseMixin {
         if (state.getBlock() != newState.getBlock()) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be != null && UpgradeSlots.supports(be)) UpgradeSlots.drop(level, be);
+            if(!level.isClientSide && be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer farmer)
+                com.aamoreadditions.farmer.FarmerRingMenus.drop(level,farmer);
         }
     }
 }
