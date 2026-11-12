@@ -1,0 +1,12 @@
+{
+  "type": "aamoreadditions:efficient_smelting",
+  "ingredients": [
+    {
+      "tag": "c:ores/gold"
+    }
+  ],
+  "result": {
+    "tag": "c:ingots/gold",
+    "count": 2
+  }
+}

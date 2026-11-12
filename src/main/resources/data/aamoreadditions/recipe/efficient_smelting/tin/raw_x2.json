@@ -1,0 +1,31 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:raw_materials/tin"
+      }
+    },
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/tin"
+      }
+    }
+  ],
+  "type": "aamoreadditions:efficient_smelting",
+  "ingredients": [
+    {
+      "tag": "c:raw_materials/tin"
+    },
+    {
+      "tag": "c:raw_materials/tin"
+    }
+  ],
+  "result": {
+    "tag": "c:ingots/tin",
+    "count": 3
+  }
+}

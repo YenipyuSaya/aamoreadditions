@@ -23,8 +23,14 @@ import java.util.function.Predicate;
 /**
  * aamoreadditions:alloying — 1..3 sized ingredients (item or tag, with count), unordered over input 1 / input 2 / extra.
  * JSON: {"type":"aamoreadditions:alloying","ingredients":[{"tag":"c:ingots/copper","count":1},...],"result":{"id":"create:brass_ingot","count":2}}
+ * Result may also be a tag: "result":{"tag":"c:ingots/bronze","count":4} (see {@link AlloyResult}).
  */
-public record AlloyingRecipe(List<SizedIngredient> ingredients, ItemStack result) implements Recipe<AlloyInput> {
+public record AlloyingRecipe(List<SizedIngredient> ingredients, AlloyResult result) implements AlloyFurnaceRecipe {
+
+    @Override public int ingredientCount() { return ingredients.size(); }
+    @Override public Ingredient ingredient(int i) { return ingredients.get(i).ingredient(); }
+    @Override public int ingredientAmount(int i) { return ingredients.get(i).count(); }
+    @Override public boolean available() { return result.available(); }
 
     /** Per-slot amounts to consume (in1, in2, extra) or null. */
     public int[] plan(AlloyInput in) {
@@ -36,6 +42,7 @@ public record AlloyingRecipe(List<SizedIngredient> ingredients, ItemStack result
     }
 
     /** take[ingredient][slot] or null. */
+    @Override
     public int[][] planDetailed(AlloyInput in) {
         List<Predicate<ItemStack>> preds = new ArrayList<>();
         int[] need = new int[ingredients.size()];
@@ -51,20 +58,29 @@ public record AlloyingRecipe(List<SizedIngredient> ingredients, ItemStack result
     }
 
     /** True if the stack matches ingredient #i. */
+    @Override
     public boolean ingredientMatches(int i, ItemStack stack) {
         return i >= 0 && i < ingredients.size() && !stack.isEmpty() && ingredients.get(i).ingredient().test(stack);
     }
 
     /** True if the stack could be part of this recipe. */
+    @Override
     public boolean uses(ItemStack stack) {
         for (SizedIngredient si : ingredients) if (si.ingredient().test(stack)) return true;
         return false;
     }
 
     @Override public boolean matches(AlloyInput input, Level level) { return plan(input) != null; }
-    @Override public ItemStack assemble(AlloyInput input, HolderLookup.Provider registries) { return result.copy(); }
+    /** Without a furnace's choice: the fixed item, else the only / first candidate (furnaces use {@link AlloyResult#produce}). */
+    @Override public ItemStack assemble(AlloyInput input, HolderLookup.Provider registries) { return displayResult(); }
     @Override public boolean canCraftInDimensions(int w, int h) { return true; }
-    @Override public ItemStack getResultItem(HolderLookup.Provider registries) { return result; }
+    @Override public ItemStack getResultItem(HolderLookup.Provider registries) { return displayResult(); }
+
+    public ItemStack displayResult() {
+        if (!result.isTag()) return result.fixedItem().copy();
+        var c = result.candidates();
+        return c.isEmpty() ? ItemStack.EMPTY : c.get(0);
+    }
     @Override public boolean isSpecial() { return true; } // keep out of the vanilla recipe book
 
     @Override
@@ -80,11 +96,11 @@ public record AlloyingRecipe(List<SizedIngredient> ingredients, ItemStack result
     public static final class Serializer implements RecipeSerializer<AlloyingRecipe> {
         public static final MapCodec<AlloyingRecipe> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 Codec.list(SizedIngredient.FLAT_CODEC, 1, 3).fieldOf("ingredients").forGetter(AlloyingRecipe::ingredients),
-                ItemStack.STRICT_CODEC.fieldOf("result").forGetter(AlloyingRecipe::result)
+                AlloyResult.CODEC.fieldOf("result").forGetter(AlloyingRecipe::result)
         ).apply(i, AlloyingRecipe::new));
         public static final StreamCodec<RegistryFriendlyByteBuf, AlloyingRecipe> STREAM_CODEC = StreamCodec.composite(
                 SizedIngredient.STREAM_CODEC.apply(ByteBufCodecs.list(3)), AlloyingRecipe::ingredients,
-                ItemStack.STREAM_CODEC, AlloyingRecipe::result,
+                AlloyResult.STREAM_CODEC, AlloyingRecipe::result,
                 AlloyingRecipe::new);
 
         @Override public MapCodec<AlloyingRecipe> codec() { return CODEC; }

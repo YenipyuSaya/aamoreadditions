@@ -1,0 +1,28 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:dusts/rose_gold"
+      }
+    },
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/rose_gold"
+      }
+    }
+  ],
+  "type": "aamoreadditions:efficient_smelting",
+  "ingredients": [
+    {
+      "tag": "c:dusts/rose_gold"
+    }
+  ],
+  "result": {
+    "tag": "c:ingots/rose_gold",
+    "count": 1
+  }
+}

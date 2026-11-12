@@ -1,0 +1,31 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:raw_materials/tungsten"
+      }
+    },
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/tungsten"
+      }
+    }
+  ],
+  "type": "aamoreadditions:efficient_smelting",
+  "ingredients": [
+    {
+      "tag": "c:raw_materials/tungsten"
+    },
+    {
+      "tag": "c:raw_materials/tungsten"
+    }
+  ],
+  "result": {
+    "tag": "c:ingots/tungsten",
+    "count": 3
+  }
+}

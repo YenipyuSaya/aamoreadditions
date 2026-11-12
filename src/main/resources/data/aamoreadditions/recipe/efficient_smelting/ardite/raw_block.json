@@ -1,0 +1,28 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:storage_blocks/raw_ardite"
+      }
+    },
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/ardite"
+      }
+    }
+  ],
+  "type": "aamoreadditions:efficient_smelting",
+  "ingredients": [
+    {
+      "tag": "c:storage_blocks/raw_ardite"
+    }
+  ],
+  "result": {
+    "tag": "c:ingots/ardite",
+    "count": 16
+  }
+}

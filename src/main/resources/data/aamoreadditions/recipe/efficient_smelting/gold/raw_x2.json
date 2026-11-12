@@ -1,0 +1,15 @@
+{
+  "type": "aamoreadditions:efficient_smelting",
+  "ingredients": [
+    {
+      "tag": "c:raw_materials/gold"
+    },
+    {
+      "tag": "c:raw_materials/gold"
+    }
+  ],
+  "result": {
+    "tag": "c:ingots/gold",
+    "count": 3
+  }
+}

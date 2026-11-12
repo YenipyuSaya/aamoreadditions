@@ -1,0 +1,12 @@
+{
+  "type": "aamoreadditions:efficient_smelting",
+  "ingredients": [
+    {
+      "tag": "c:ores/iron"
+    }
+  ],
+  "result": {
+    "tag": "c:ingots/iron",
+    "count": 2
+  }
+}

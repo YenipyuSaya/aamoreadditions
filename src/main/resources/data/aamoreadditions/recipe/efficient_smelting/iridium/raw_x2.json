@@ -1,0 +1,31 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:raw_materials/iridium"
+      }
+    },
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/iridium"
+      }
+    }
+  ],
+  "type": "aamoreadditions:efficient_smelting",
+  "ingredients": [
+    {
+      "tag": "c:raw_materials/iridium"
+    },
+    {
+      "tag": "c:raw_materials/iridium"
+    }
+  ],
+  "result": {
+    "tag": "c:ingots/iridium",
+    "count": 3
+  }
+}

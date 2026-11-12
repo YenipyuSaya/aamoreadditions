@@ -1,0 +1,31 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:raw_materials/lead"
+      }
+    },
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/lead"
+      }
+    }
+  ],
+  "type": "aamoreadditions:efficient_smelting",
+  "ingredients": [
+    {
+      "tag": "c:raw_materials/lead"
+    },
+    {
+      "tag": "c:raw_materials/lead"
+    }
+  ],
+  "result": {
+    "tag": "c:ingots/lead",
+    "count": 3
+  }
+}

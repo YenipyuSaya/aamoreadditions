@@ -1,0 +1,18 @@
+{
+  "type": "aamoreadditions:efficient_smelting",
+  "ingredients": [
+    {
+      "tag": "c:raw_materials/copper"
+    },
+    {
+      "tag": "c:raw_materials/copper"
+    },
+    {
+      "tag": "c:raw_materials/copper"
+    }
+  ],
+  "result": {
+    "tag": "c:ingots/copper",
+    "count": 5
+  }
+}

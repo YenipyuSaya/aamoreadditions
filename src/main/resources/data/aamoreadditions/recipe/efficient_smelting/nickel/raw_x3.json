@@ -1,0 +1,34 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:raw_materials/nickel"
+      }
+    },
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/nickel"
+      }
+    }
+  ],
+  "type": "aamoreadditions:efficient_smelting",
+  "ingredients": [
+    {
+      "tag": "c:raw_materials/nickel"
+    },
+    {
+      "tag": "c:raw_materials/nickel"
+    },
+    {
+      "tag": "c:raw_materials/nickel"
+    }
+  ],
+  "result": {
+    "tag": "c:ingots/nickel",
+    "count": 5
+  }
+}

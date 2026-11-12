@@ -1,0 +1,34 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:raw_materials/ardite"
+      }
+    },
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/ardite"
+      }
+    }
+  ],
+  "type": "aamoreadditions:efficient_smelting",
+  "ingredients": [
+    {
+      "tag": "c:raw_materials/ardite"
+    },
+    {
+      "tag": "c:raw_materials/ardite"
+    },
+    {
+      "tag": "c:raw_materials/ardite"
+    }
+  ],
+  "result": {
+    "tag": "c:ingots/ardite",
+    "count": 5
+  }
+}

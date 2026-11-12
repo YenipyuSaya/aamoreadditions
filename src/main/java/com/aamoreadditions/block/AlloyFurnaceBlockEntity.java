@@ -33,14 +33,46 @@ public class AlloyFurnaceBlockEntity extends TileEntityPoweredFurnace {
     public final com.aamoreadditions.recipe.RecipeLock lock = new com.aamoreadditions.recipe.RecipeLock();
     public static final int LOCK_IN_1 = 0, LOCK_IN_2 = 1, LOCK_EXTRA = 2;
 
+    /** Same-tag output choices: output tag -> chosen item id. Saved + synced via writeSyncableNBT. */
+    public final com.aamoreadditions.recipe.OutputChoices outputChoices = new com.aamoreadditions.recipe.OutputChoices();
+
+    /**
+     * Server: player picked an item for an output tag (from the selection overlay packet).
+     * Validated: the item must currently be in that tag. A changed choice resets the progress immediately.
+     */
+    public boolean chooseOutput(String tag, String item) {
+        if (!outputChoices.choose(tag, item, com.aamoreadditions.recipe.AlloyResult.itemsInTag(tag))) return false;
+        firstSmeltTime = 0;
+        setChanged();
+        sendUpdate();
+        return true;
+    }
+
+    /** Current recipe match (either side; the client uses its synced slots), or null. */
+    public com.aamoreadditions.recipe.ModRecipes.Match currentMatch() {
+        return com.aamoreadditions.recipe.ModRecipes.find(level, alloyInput(), efficientMode);
+    }
+
+    /** Ticks for the current recipe (its base time: 80, raw blocks 640, or a recipe's own "time"), upgrades applied. */
+    public int currentMaxTime() {
+        var m = currentMatch();
+        return com.aamoreadditions.effect.UpgradeEffects.time(this, m == null ? com.aamoreadditions.recipe.AlloyFurnaceRecipe.STANDARD_TIME : m.recipe().value().baseTime());
+    }
+
+    /** Progress bar: scaled against the current recipe's time (AA's version assumes a fixed 80). */
+    @Override
+    public int getFirstTimeToScale(int i) {
+        return Math.min(i, firstSmeltTime * i / Math.max(1, currentMaxTime()));
+    }
+
     /** Lock slot index for an AA inv slot (input 1 / input 2), or -1. */
     public static int lockSlotOf(int invSlot) {
         return invSlot == SLOT_INPUT_1 ? LOCK_IN_1 : invSlot == SLOT_INPUT_2 ? LOCK_IN_2 : -1;
     }
 
     /** The recorded recipe (null if unlocked, pending, or missing on this side). */
-    public com.aamoreadditions.recipe.AlloyingRecipe lockedRecipe() {
-        return lock.recorded() ? com.aamoreadditions.recipe.ModRecipes.byId(level, lock.recipeId()) : null;
+    public com.aamoreadditions.recipe.AlloyFurnaceRecipe lockedRecipe() {
+        return lock.recorded() ? com.aamoreadditions.recipe.ModRecipes.furnaceById(level, lock.recipeId()) : null;
     }
 
     /** May this stack be placed into lock slot s (any route)? */
@@ -75,6 +107,22 @@ public class AlloyFurnaceBlockEntity extends TileEntityPoweredFurnace {
         if (automationHandler == null)
             automationHandler = new net.neoforged.neoforge.items.wrapper.CombinedInvWrapper(inv, extraAuto);
         return com.aamoreadditions.upgrade.UpgradeAutomation.items(this, automationHandler);
+    }
+
+    /**
+     * Furnace mode: false = Alloy mode (default), true = Efficient-Smelting mode.
+     * Alloy mode runs only alloying recipes; Efficient-Smelting mode only efficient-smelting recipes. Switching resets progress and unlocks the recipe lock.
+     * Saved + synced via writeSyncableNBT ("AAMAMode").
+     */
+    public boolean efficientMode;
+
+    /** Server: switch mode via the menu button. */
+    public void toggleMode() {
+        efficientMode = !efficientMode;
+        firstSmeltTime = 0; // switching mode resets the progress
+        lock.unlock();      // ...and releases the recipe lock
+        setChanged();
+        sendUpdate();
     }
 
     /** Server: toggle via menu button. */
@@ -112,9 +160,13 @@ public class AlloyFurnaceBlockEntity extends TileEntityPoweredFurnace {
     /** True if the single output slot can take the whole result (empty, or same item+components with room). */
     private boolean outputFits(ItemStack result) {
         ItemStack out = inv.getStackInSlot(SLOT_OUTPUT_2);
-        if (out.isEmpty()) return result.getCount() <= result.getMaxStackSize();
-        return ItemStack.isSameItemSameComponents(out, result) && out.getCount() + result.getCount() <= out.getMaxStackSize();
+        // a different (e.g. previously chosen) item still in the output -> wait until it is taken out, never mix
+        return com.aamoreadditions.recipe.OutputChoices.fits(out.isEmpty(), ItemStack.isSameItemSameComponents(out, result),
+                out.getCount(), result.getCount(), out.isEmpty() ? result.getMaxStackSize() : out.getMaxStackSize());
     }
+
+    /** Recipe the current progress belongs to (Efficient mode reset check). Saved as "AAMAEffRecipe", so a different recipe after a reload also resets. */
+    private String lastRecipeId;
 
     /** Single-line alloying tick. Progress is kept in firstSmeltTime (secondSmeltTime stays 0). */
     private void tickAlloy(net.minecraft.world.level.Level level, BlockPos pos, BlockState state) {
@@ -123,17 +175,23 @@ public class AlloyFurnaceBlockEntity extends TileEntityPoweredFurnace {
         mergeLegacyOutput();
         secondSmeltTime = 0;
         if (lock.recorded() && level.getGameTime() % 20 == 0
-                && lock.validate(id -> com.aamoreadditions.recipe.ModRecipes.byId(level, id) != null)) {
+                && lock.validate(id -> com.aamoreadditions.recipe.ModRecipes.furnaceById(level, id) != null)) {
             setChanged();
             sendUpdate();
         }
-        var match = com.aamoreadditions.recipe.ModRecipes.find(level, alloyInput());
-        ItemStack result = match == null ? ItemStack.EMPTY : match.recipe().value().assemble(alloyInput(), level.registryAccess());
+        // Alloy mode: only alloying recipes. Efficient-Smelting mode: only efficient-smelting recipes.
+        var match = com.aamoreadditions.recipe.ModRecipes.find(level, alloyInput(), efficientMode);
+        // Efficient-Smelting mode: a different recipe than last tick restarts the progress (Alloy mode keeps it)
+        String id = match == null ? null : match.recipe().id().toString();
+        if (com.aamoreadditions.recipe.EfficientMatcher.restartOnChange(efficientMode, lastRecipeId, id)) firstSmeltTime = 0;
+        if (id != null && !id.equals(lastRecipeId)) { lastRecipeId = id; setChanged(); }
+        // same-tag output: the furnace's choice for the output tag (EMPTY = no choice yet -> wait)
+        ItemStack result = match == null ? ItemStack.EMPTY : match.recipe().value().result().produce(outputChoices);
         boolean working = match != null && !result.isEmpty() && outputFits(result);
         if (!working) firstSmeltTime = 0;
         int cost = working ? energyPerTick() : 0;
         if (com.aamoreadditions.effect.UpgradeMath.alloyTickProgresses(working, storage.getEnergyStored(), cost)) {
-            int max = com.aamoreadditions.effect.UpgradeEffects.time(this, 80);
+            int max = com.aamoreadditions.effect.UpgradeEffects.time(this, match.recipe().value().baseTime());
             if (++firstSmeltTime >= max) {
                 // record the lock mapping BEFORE consuming (slots may become empty)
                 if (lock.recordIfPending(match.recipe().id().toString(), match.take())) { setChanged(); sendUpdate(); }
@@ -173,7 +231,7 @@ public class AlloyFurnaceBlockEntity extends TileEntityPoweredFurnace {
     @Override
     public void onButtonPressed(int buttonID, net.minecraft.world.entity.player.Player player) {}
 
-    /** Automation / shift-click: only items used by some alloying recipe. */
+    /** Automation / shift-click: items used by any alloying OR efficient-smelting recipe, in both modes (the lock filters). */
     @Override
     public boolean validInput(ItemStack stack) {
         return com.aamoreadditions.recipe.ModRecipes.isIngredient(level, stack);
@@ -250,6 +308,11 @@ public class AlloyFurnaceBlockEntity extends TileEntityPoweredFurnace {
             l.putString("Recipe", lock.encodedId());
             l.putIntArray("Slots", lock.encodedMap());
             compound.put("AAMALock", l);
+            CompoundTag oc = new CompoundTag();
+            outputChoices.encode().forEach(oc::putString);
+            compound.put("AAMAOutputChoice", oc);
+            compound.putBoolean("AAMAMode", efficientMode);
+            if (lastRecipeId != null) compound.putString("AAMAEffRecipe", lastRecipeId);
         }
     }
 
@@ -264,6 +327,15 @@ public class AlloyFurnaceBlockEntity extends TileEntityPoweredFurnace {
             } else {
                 lock.unlock(); // old saves: unlocked
             }
+            java.util.Map<String, String> m = new java.util.TreeMap<>();
+            if (compound.contains("AAMAOutputChoice")) {
+                CompoundTag oc = compound.getCompound("AAMAOutputChoice");
+                for (String k : oc.getAllKeys()) m.put(k, oc.getString(k));
+            }
+            outputChoices.decode(m); // old saves: no choices
+            efficientMode = compound.getBoolean("AAMAMode"); // old saves: Alloy mode
+            // recipe the progress belongs to; old saves: none -> the first match is adopted without a reset
+            lastRecipeId = compound.contains("AAMAEffRecipe") && !compound.getString("AAMAEffRecipe").isEmpty() ? compound.getString("AAMAEffRecipe") : null;
         }
     }
 

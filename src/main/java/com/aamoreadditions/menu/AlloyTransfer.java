@@ -1,7 +1,7 @@
 package com.aamoreadditions.menu;
 
 import com.aamoreadditions.block.AlloyFurnaceBlockEntity;
-import com.aamoreadditions.recipe.AlloyingRecipe;
+import com.aamoreadditions.recipe.AlloyFurnaceRecipe;
 import com.aamoreadditions.recipe.TransferPlanner;
 import de.ellpeck.actuallyadditions.mod.tile.TileEntityPoweredFurnace;
 import net.minecraft.world.entity.player.Player;
@@ -37,7 +37,7 @@ public final class AlloyTransfer {
      * whatever is left of the furnace items is merged back into the inventory, the rest becomes drops.
      * Everything is computed on copies; nothing is created or destroyed.
      */
-    public static Result simulate(Player player, AlloyFurnaceBlockEntity f, String recipeId, AlloyingRecipe recipe) {
+    public static Result simulate(Player player, AlloyFurnaceBlockEntity f, String recipeId, AlloyFurnaceRecipe recipe) {
         if (f.lock.recorded() && !f.lock.recipeId().equals(recipeId)) return Result.fail(Outcome.IGNORED);
         List<ItemStack> pool = new ArrayList<>();
         for (ItemStack s : player.getInventory().items) pool.add(s.copy());
@@ -45,11 +45,12 @@ public final class AlloyTransfer {
         for (ItemStack s : currentSlots(f)) pool.add(s.copy());
 
         List<Predicate<ItemStack>> preds = new ArrayList<>();
-        int[] counts = new int[recipe.ingredients().size()];
+        // alloying: ingredient #i (with its count) -> slot i; efficient smelting: one item per ingredient -> input 1/2/3
+        int[] counts = new int[recipe.ingredientCount()];
         for (int i = 0; i < counts.length; i++) {
-            var ing = recipe.ingredients().get(i).ingredient();
+            var ing = recipe.ingredient(i);
             preds.add(s -> !s.isEmpty() && ing.test(s));
-            counts[i] = recipe.ingredients().get(i).count();
+            counts[i] = recipe.ingredientAmount(i);
         }
         int[] poolCounts = new int[pool.size()];
         for (int i = 0; i < pool.size(); i++) poolCounts[i] = pool.get(i).getCount();
@@ -93,7 +94,7 @@ public final class AlloyTransfer {
         if (!(player.containerMenu instanceof AlloyFurnaceMenu menu) || !menu.stillValid(player)) return;
         AlloyFurnaceBlockEntity f = menu.furnace;
         if (com.aamoreadditions.upgrade.UpgradeRuntime.blocked(f)) return;
-        AlloyingRecipe recipe = com.aamoreadditions.recipe.ModRecipes.byId(player.level(), recipeId);
+        AlloyFurnaceRecipe recipe = com.aamoreadditions.recipe.ModRecipes.furnaceById(player.level(), recipeId); // either type
         if (recipe == null) return;
         Result r = simulate(player, f, recipeId, recipe);
         if (r.outcome() != Outcome.OK) return;
