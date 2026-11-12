@@ -1,0 +1,27 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "enderio"
+    }
+  ],
+  "type": "aamoreadditions:alloying",
+  "ingredients": [
+    {
+      "tag": "c:dusts/redstone",
+      "count": 1
+    },
+    {
+      "tag": "c:ingots/conductive_alloy",
+      "count": 1
+    },
+    {
+      "tag": "c:ingots/gold",
+      "count": 1
+    }
+  ],
+  "result": {
+    "id": "enderio:energetic_alloy_ingot",
+    "count": 2
+  }
+}

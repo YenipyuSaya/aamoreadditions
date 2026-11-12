@@ -1,0 +1,34 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:raw_materials/aluminum"
+      }
+    },
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/aluminum"
+      }
+    }
+  ],
+  "type": "aamoreadditions:efficient_smelting",
+  "ingredients": [
+    {
+      "tag": "c:raw_materials/aluminum"
+    },
+    {
+      "tag": "c:raw_materials/aluminum"
+    },
+    {
+      "tag": "c:raw_materials/aluminum"
+    }
+  ],
+  "result": {
+    "tag": "c:ingots/aluminum",
+    "count": 5
+  }
+}

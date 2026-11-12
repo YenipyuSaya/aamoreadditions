@@ -37,13 +37,17 @@ public class AlloyFurnaceMenu extends AbstractContainerMenu {
         UpgradeMenus.addSlots(this, tile);
     }
 
-    public static final int BUTTON_LOCK = 7710;
+    public static final int BUTTON_LOCK = 7710, BUTTON_MODE = 7711;
 
     /** Lock button (sent by the screen through handleInventoryButtonClick; processed on the server). */
     @Override
     public boolean clickMenuButton(Player player, int id) {
         if (id == BUTTON_LOCK) {
             if (!player.level().isClientSide) furnace.toggleLock();
+            return true;
+        }
+        if (id == BUTTON_MODE) {
+            if (!player.level().isClientSide) furnace.toggleMode();
             return true;
         }
         return super.clickMenuButton(player, id);

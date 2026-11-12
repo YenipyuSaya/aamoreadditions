@@ -1,0 +1,12 @@
+{
+  "type": "aamoreadditions:efficient_smelting",
+  "ingredients": [
+    {
+      "tag": "c:storage_blocks/raw_iron"
+    }
+  ],
+  "result": {
+    "tag": "c:ingots/iron",
+    "count": 16
+  }
+}

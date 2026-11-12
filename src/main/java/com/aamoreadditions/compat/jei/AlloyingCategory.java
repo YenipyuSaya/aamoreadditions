@@ -52,9 +52,16 @@ public class AlloyingCategory implements IRecipeCategory<RecipeHolder<AlloyingRe
                     .addItemStacks(Arrays.asList(ings.get(i).getItems()))
                     .addRichTooltipCallback(tagTooltip(ings.get(i)));
         }
+        // same-tag output: every item the player can choose in the furnace, rotating (sorted by id)
+        var res = holder.value().result();
+        String group = res.group();
         builder.addSlot(RecipeIngredientRole.OUTPUT, OUT_X + 5, SLOT_Y - 3)
                 .setBackground(outSlot, -5, -5)
-                .addItemStack(holder.value().result());
+                .addItemStacks(res.candidates())
+                .addRichTooltipCallback((view, tip) -> {
+                    if (group != null && res.candidates().size() > 1)
+                        tip.add(Component.translatable("jei.aamoreadditions.alloying.tag", group).withStyle(net.minecraft.ChatFormatting.GRAY));
+                });
     }
 
     /** Adds "Tag: c:ingots/xxx" (grey) for tag ingredients so the tag id is visible. */

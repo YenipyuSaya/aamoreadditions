@@ -1,0 +1,27 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "enderio"
+    }
+  ],
+  "type": "aamoreadditions:alloying",
+  "ingredients": [
+    {
+      "tag": "c:ingots/energetic_alloy",
+      "count": 1
+    },
+    {
+      "tag": "c:ender_pearls",
+      "count": 1
+    },
+    {
+      "tag": "c:dusts/glowstone",
+      "count": 1
+    }
+  ],
+  "result": {
+    "id": "enderio:vibrant_alloy_ingot",
+    "count": 2
+  }
+}

@@ -22,6 +22,20 @@ public final class ModNetwork {
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
+    /** Client -> server: "in my open Alloy Furnace, produce this item for this output tag". Validated on the server. */
+    public record AlloyOutputChoicePayload(String tag, String item) implements CustomPacketPayload {
+        public static final Type<AlloyOutputChoicePayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(AAMoreAdditions.MODID, "alloy_output_choice"));
+        public static final StreamCodec<ByteBuf, AlloyOutputChoicePayload> CODEC = StreamCodec.composite(
+                ByteBufCodecs.stringUtf8(256), AlloyOutputChoicePayload::tag, ByteBufCodecs.stringUtf8(256), AlloyOutputChoicePayload::item, AlloyOutputChoicePayload::new);
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
+    /** Server side of {@link AlloyOutputChoicePayload}: only for the furnace in the player's open, still-valid menu. */
+    static void applyOutputChoice(net.minecraft.world.entity.player.Player player, String tag, String item) {
+        if (player != null && player.containerMenu instanceof com.aamoreadditions.menu.AlloyFurnaceMenu m && m.stillValid(player))
+            m.furnace.chooseOutput(tag, item);
+    }
+
     /** Client -> server: move one craft of this empowering recipe into the open Empowerer structure. */
     public record EmpowererTransferPayload(String recipeId) implements CustomPacketPayload {
         public static final Type<EmpowererTransferPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(AAMoreAdditions.MODID, "empowerer_transfer"));
@@ -52,6 +66,8 @@ public final class ModNetwork {
                         new com.aamoreadditions.upgrade.UpgradeStartup.Snapshot(p.dependency(), p.slots()))));
         event.registrar("1").optional().playToServer(AlloyTransferPayload.TYPE, AlloyTransferPayload.CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> AlloyTransfer.apply(ctx.player(), payload.recipeId())));
+        event.registrar("1").optional().playToServer(AlloyOutputChoicePayload.TYPE, AlloyOutputChoicePayload.CODEC,
+                (payload, ctx) -> ctx.enqueueWork(() -> applyOutputChoice(ctx.player(), payload.tag(), payload.item())));
         event.registrar("1").optional().playToServer(EmpowererTransferPayload.TYPE, EmpowererTransferPayload.CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> com.aamoreadditions.menu.EmpowererTransfer.apply(ctx.player(), payload.recipeId())));
         event.registrar("1").optional().playToClient(EmpowererSoundPayload.TYPE, EmpowererSoundPayload.CODEC,
