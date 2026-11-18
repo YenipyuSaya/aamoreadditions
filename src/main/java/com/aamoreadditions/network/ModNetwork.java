@@ -59,6 +59,20 @@ public final class ModNetwork {
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
+    /** Client -> server: toggle Out-of-order / Memory mode of the Farmer in my open, still-valid Farmer GUI. */
+    public record FarmerModePayload() implements CustomPacketPayload {
+        public static final FarmerModePayload INSTANCE = new FarmerModePayload();
+        public static final Type<FarmerModePayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(AAMoreAdditions.MODID, "farmer_mode"));
+        public static final StreamCodec<ByteBuf, FarmerModePayload> CODEC = StreamCodec.unit(INSTANCE);
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
+    /** Server side of {@link FarmerModePayload}. */
+    static void toggleFarmerMode(net.minecraft.world.entity.player.Player player) {
+        if (player != null && player.containerMenu instanceof de.ellpeck.actuallyadditions.mod.inventory.ContainerFarmer m && m.stillValid(player))
+            com.aamoreadditions.farmer.FarmerMemoryRuntime.toggle(m.farmer);
+    }
+
     @SubscribeEvent
     public static void register(RegisterPayloadHandlersEvent event) {
         event.registrar("3").playToClient(UpgradePolicyPayload.TYPE, UpgradePolicyPayload.CODEC,
@@ -68,6 +82,8 @@ public final class ModNetwork {
                 (payload, ctx) -> ctx.enqueueWork(() -> AlloyTransfer.apply(ctx.player(), payload.recipeId())));
         event.registrar("1").optional().playToServer(AlloyOutputChoicePayload.TYPE, AlloyOutputChoicePayload.CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> applyOutputChoice(ctx.player(), payload.tag(), payload.item())));
+        event.registrar("1").optional().playToServer(FarmerModePayload.TYPE, FarmerModePayload.CODEC,
+                (payload, ctx) -> ctx.enqueueWork(() -> toggleFarmerMode(ctx.player())));
         event.registrar("1").optional().playToServer(EmpowererTransferPayload.TYPE, EmpowererTransferPayload.CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> com.aamoreadditions.menu.EmpowererTransfer.apply(ctx.player(), payload.recipeId())));
         event.registrar("1").optional().playToClient(EmpowererSoundPayload.TYPE, EmpowererSoundPayload.CODEC,

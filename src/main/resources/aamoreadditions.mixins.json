@@ -36,7 +36,13 @@
     "UpgradeInventoryAutomationMixin",
     "UpgradeOilAutomationMixin",
     "BlockOilGeneratorPauseMixin",
-    "BlockCoalGeneratorPauseMixin"
+    "BlockCoalGeneratorPauseMixin",
+    "LootTableAccessor",
+    "LootPoolAccessor",
+    "CompositeEntryBaseAccessor",
+    "LootItemAccessor",
+    "TagEntryAccessor",
+    "NestedLootTableAccessor"
   ],
   "client": [
     "AbstractContainerScreenMixin",

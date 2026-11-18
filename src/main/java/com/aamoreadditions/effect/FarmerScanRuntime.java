@@ -21,8 +21,11 @@ public final class FarmerScanRuntime {
         var work=(FarmerWorkState)tile;var scan=work.aamoreadditions$farmerScan();
         boolean old=scan.sleeping();
         int facing=tile.getBlockState().getValue(BlockStateProperties.HORIZONTAL_FACING).get3DDataValue();
-        if(scan.configure(side(tile),facing,tile.getBlockPos().asLong(),UpgradeConfig.farmerSmartSleep()))
+        if(scan.configure(side(tile),facing,tile.getBlockPos().asLong(),UpgradeConfig.farmerSmartSleep())) {
             work.aamoreadditions$setFarmerWait(0);
+            // Area (or load/first tick) changed: drop memory-mode records outside the scanned square.
+            com.aamoreadditions.farmer.FarmerMemoryRuntime.retainArea(tile,side(tile));
+        }
         if(old!=scan.sleeping())tile.sendUpdate();
     }
     public static void checked(TileEntityFarmer tile,BlockPos query,boolean candidate,boolean storageBlocked,boolean harvestFits,boolean planted,List<IFarmerBehavior> behaviors) {

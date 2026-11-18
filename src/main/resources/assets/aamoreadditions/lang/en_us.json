@@ -12,6 +12,8 @@
   "gui.aamoreadditions.info.farmer.cooldown": "work cooldown: %s ticks",
   "gui.aamoreadditions.info.farmer.energy": "Energy multiplier: %s",
   "gui.aamoreadditions.info.farmer.fortune": "current Fortune level: %s",
+  "gui.aamoreadditions.farmer.mode.out_of_order": "Mode: Out-of-order",
+  "gui.aamoreadditions.farmer.mode.memory": "Mode: Memory",
   "item.aamoreadditions.speed_upgrade_machine_1": "Machine Speed Upgrade I",
   "item.aamoreadditions.speed_upgrade_machine_2": "Machine Speed Upgrade II",
   "item.aamoreadditions.speed_upgrade_machine_3": "Machine Speed Upgrade III",
