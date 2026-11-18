@@ -83,10 +83,12 @@ class UpgradeConfigPruningTest {
     @Test void completeConstructedSpecIs173LeavesWith155RemovedAndThreeCrossFieldsAdded() {
         var server = leaves(UpgradeConfig.SPEC.getSpec());
         var startup = leaves(UpgradeStartup.SPEC.getSpec());
-        assertEquals(161, server.size()); assertEquals(12, startup.size());
-        assertEquals(173, server.size() + startup.size());
-        assertEquals(155, 325 - (server.size() + startup.size() - 3));
-        assertEquals(33, server.keySet().stream().filter(k -> k.startsWith("base_values.") || !k.contains(".")).count());
+        // +1 later: farmer_memory_seed_candidates (a new Farmer field, not part of the pruning count)
+        assertEquals(162, server.size()); assertEquals(12, startup.size());
+        assertEquals(174, server.size() + startup.size());
+        assertEquals(155, 325 - (server.size() + startup.size() - 3 - 1));
+        assertTrue(server.containsKey("farmer.farmer_memory_seed_candidates"));
+        assertEquals(31, server.keySet().stream().filter(k -> k.startsWith("base_values.") || !k.contains(".")).count());
         assertFalse(UpgradeConfig.SPEC.getSpec().contains("energizer.speed_upgrade_machine_1"));
         assertFalse(UpgradeConfig.SPEC.getSpec().contains("energizer.speed_upgrade_machine_2"));
         assertFalse(UpgradeConfig.SPEC.getSpec().contains("energizer.speed_upgrade_machine_3"));
@@ -123,11 +125,31 @@ class UpgradeConfigPruningTest {
             }
         }
     }
+    @Test void farmerOptionsShareOneGroupAndLegacyRootKeysAreNotMigrated() {
+        var spec = leaves(UpgradeConfig.SPEC.getSpec());
+        var defaults = List.of(true, true, com.aamoreadditions.farmer.FarmerSeedCandidates.DEFAULTS);
+        var keys = List.of("farmer_smart_sleep", "farmer_accelerates_ripening", "farmer_memory_seed_candidates");
+        for (int i = 0; i < keys.size(); i++) {
+            String key = keys.get(i);
+            assertFalse(spec.containsKey(key));
+            assertEquals(defaults.get(i), spec.get("farmer." + key).getDefault());
+            assertEquals(EnglishConfigNames.label(key), spec.get("farmer." + key).getTranslationKey());
+        }
+        // No custom migration exists: NeoForge corrects old root keys away and fills the new paths with defaults.
+        config.set("farmer_smart_sleep", false);
+        config.set("farmer_accelerates_ripening", false);
+        config.set("farmer_memory_seed_candidates", List.of("minecraft:carrot"));
+        UpgradeConfig.SPEC.correct(config);
+        for (int i = 0; i < keys.size(); i++) {
+            assertFalse(config.contains(keys.get(i)));
+            assertEquals(defaults.get(i), config.get("farmer." + keys.get(i)));
+        }
+    }
     @Test void obsoleteLegacyKeysAreNormallyCorrectedWithoutTouchingValidCustomValues() {
         for (var m : MachineKind.values()) for (var t : UpgradeType.values()) for (int f = 0; f < FIELDS.size(); f++)
             config.set(path(m,t,f), f == 5 ? true : 7.0);
         config.set("base_values.coal_generator_fe_per_tick", 73);
-        config.set("farmer_accelerates_ripening", false);
+        config.set("farmer.farmer_accelerates_ripening", false);
         List<String> removed = new ArrayList<>();
         UpgradeConfig.SPEC.correct(config, (action,path,oldValue,newValue) -> {
             if (action == CorrectionAction.REMOVE) removed.add(String.join(".",path));
@@ -142,7 +164,7 @@ class UpgradeConfigPruningTest {
             else assertFalse(config.contains(key), key);
         }
         assertEquals(73, (int)config.get("base_values.coal_generator_fe_per_tick"));
-        assertEquals(false, config.get("farmer_accelerates_ripening"));
+        assertEquals(false, config.get("farmer.farmer_accelerates_ripening"));
         UpgradeConfig.SPEC.afterReload();
         assertEquals(7, UpgradeConfig.capacity(MachineKind.CRUSHER, UpgradeType.SPEED_3));
         assertEquals(1, UpgradeConfig.inputRate(MachineKind.CRUSHER, UpgradeType.SPEED_3));
@@ -183,7 +205,7 @@ class UpgradeConfigPruningTest {
         Set<String> paths = new TreeSet<>();
         collectValues(UpgradeConfig.SPEC.getValues(), "", paths);
         assertEquals(leaves(UpgradeConfig.SPEC.getSpec()).keySet(), paths);
-        assertEquals(161, paths.size());
+        assertEquals(162, paths.size());
     }
     private static void collectValues(UnmodifiableConfig node, String prefix, Set<String> paths) {
         assertFalse(node.valueMap().isEmpty());
@@ -213,6 +235,7 @@ class UpgradeConfigPruningTest {
     }
     @Test void realLegacyTomlRoundTripKeepsCustomValuesAndDropsOnlyObsoletePaths() {
         var legacy = new TomlParser().parse("""
+                [farmer]
                 farmer_smart_sleep = false
                 [base_values]
                 crusher_fe_per_tick = 91
@@ -231,7 +254,7 @@ class UpgradeConfigPruningTest {
         UpgradeConfig.SPEC.correct(legacy);
         var roundTrip = new TomlParser().parse(new TomlWriter().writeToString(legacy));
         assertTrue(UpgradeConfig.SPEC.isCorrect(roundTrip));
-        assertEquals(false, roundTrip.get("farmer_smart_sleep"));
+        assertEquals(false, roundTrip.get("farmer.farmer_smart_sleep"));
         assertEquals(91, ((Number)roundTrip.get("base_values.crusher_fe_per_tick")).intValue());
         assertEquals(4.0, roundTrip.get("crusher.speed_upgrade_machine_3.capacity_multiplier"));
         assertEquals(true, roundTrip.get("heat_collector.speed_upgrade_machine_3.prevents_lava_consumption"));

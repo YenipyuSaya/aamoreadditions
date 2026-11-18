@@ -7,11 +7,14 @@
     },
     "S": {
       "item": "actuallyadditions:enori_crystal"
+    },
+    "A": {
+      "item": "actuallyadditions:advanced_coil"
     }
   },
   "pattern": [
     "C  ",
-    " S ",
+    "AS ",
     "  S"
   ],
   "result": {

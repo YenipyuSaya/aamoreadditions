@@ -4,6 +4,7 @@ import com.aamoreadditions.upgrade.UpgradeType;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -32,6 +33,11 @@ public final class UpgradeConfig {
     private static final ModConfigSpec.BooleanValue FARMER_ACCELERATES_RIPENING;
     public static boolean farmerAcceleratesRipening(){return !SPEC.isLoaded() || FARMER_ACCELERATES_RIPENING.get();}
     public static boolean farmerSmartSleep(){return !SPEC.isLoaded() || FARMER_SMART_SLEEP.get();}
+    private static final ModConfigSpec.ConfigValue<List<? extends String>> FARMER_MEMORY_SEEDS;
+    @SuppressWarnings("unchecked")
+    public static List<String> farmerMemorySeedCandidates(){
+        return SPEC.isLoaded() ? (List<String>) FARMER_MEMORY_SEEDS.get() : com.aamoreadditions.farmer.FarmerSeedCandidates.DEFAULTS;
+    }
 
     private static boolean isProcessor(MachineKind m) {
         return m == MachineKind.CRUSHER || m == MachineKind.CRUSHER_DOUBLE || m == MachineKind.POWERED_FURNACE;
@@ -133,10 +139,15 @@ public final class UpgradeConfig {
         b.pop().pop();
         LEAF_IDLE_SLEEP = b.comment("Leaf generator: when a scan finds no leaves, skip scanning for this many ticks (0 = off). Applies regardless of upgrades.")
                 .defineInRange("leaf_generator_idle_sleep_ticks", 100, 0, 72000);
+        b.push("farmer");
         FARMER_SMART_SLEEP = b.comment("Enable Farmer smart sleep: after a complete normal-speed round finds no processable mature harvest, check one cell every 20 ticks. Capacity uses actual harvest drops, not empty slots; individual rejected crops do not slow an unfinished round. A mature harvest whose drops fit or successful planting restores normal cooldown. Disabling clears sleep; cheap harvest filtering remains enabled.")
                 .define("farmer_smart_sleep", true);
         FARMER_ACCELERATES_RIPENING = b.comment("Enable the Farmer growth-ring slot and independent ripening loop. Disabling hides the slot and arrow, stops charging and ripening, and keeps the stored ring until re-enabled.")
                 .define("farmer_accelerates_ripening", true);
+        FARMER_MEMORY_SEEDS = b.comment("Farmer memory mode: which loot-table items of a crop count as its seed. Each entry is an item id (minecraft:wheat_seeds) or an item tag prefixed with # (#c:crops/rice). Among matching items the one that places the crop wins, otherwise the lowest item id. Invalid or unknown entries are ignored with a warning in the log.")
+                .translation(com.aamoreadditions.config.EnglishConfigNames.label("farmer_memory_seed_candidates"))
+                .defineListAllowEmpty("farmer_memory_seed_candidates", com.aamoreadditions.farmer.FarmerSeedCandidates.DEFAULTS, () -> "", o -> o instanceof String);
+        b.pop();
         for (MachineKind m : MachineKind.values()) {
             b.push(m.key);
             Map<UpgradeType, Entry> map = new EnumMap<>(UpgradeType.class);

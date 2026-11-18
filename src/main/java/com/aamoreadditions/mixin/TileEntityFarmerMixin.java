@@ -26,7 +26,9 @@ import java.util.List;
 
 /** Native AA traversal and planting stay intact; only counter/harvest calls are adapted. */
 @Mixin(value=TileEntityFarmer.class,remap=false)
-public abstract class TileEntityFarmerMixin implements FarmerWorkState, com.aamoreadditions.farmer.FarmerRingState {
+public abstract class TileEntityFarmerMixin implements FarmerWorkState, com.aamoreadditions.farmer.FarmerRingState, com.aamoreadditions.farmer.FarmerMemoryState {
+    @Unique private final com.aamoreadditions.farmer.FarmerMemory aamoreadditions$memory=new com.aamoreadditions.farmer.FarmerMemory();
+    @Override public com.aamoreadditions.farmer.FarmerMemory aamoreadditions$farmerMemory(){return aamoreadditions$memory;}
     @Unique private com.aamoreadditions.farmer.FarmerRingInventory aamoreadditions$ring;
     @Override public com.aamoreadditions.farmer.FarmerRingInventory aamoreadditions$ringInventory(){
         if(aamoreadditions$ring==null)aamoreadditions$ring=new com.aamoreadditions.farmer.FarmerRingInventory((TileEntityFarmer)(Object)this);
@@ -67,7 +69,8 @@ public abstract class TileEntityFarmerMixin implements FarmerWorkState, com.aamo
         aamoreadditions$candidate=false;
         aamoreadditions$storageBlocked=false;
         aamoreadditions$harvestFits=false;
-        aamoreadditions$planted=false;
+        // Memory mode: record this cell (before AA harvests it), then at most one hoe interaction (work, never planting).
+        aamoreadditions$planted=com.aamoreadditions.farmer.FarmerMemoryRuntime.beginCell((TileEntityFarmer)(Object)this,query);
     }
 
     @WrapOperation(method="checkBehaviors",at=@At(value="INVOKE",target="Lde/ellpeck/actuallyadditions/api/farmer/IFarmerBehavior;tryHarvestPlant(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lde/ellpeck/actuallyadditions/api/internal/IFarmer;)Lde/ellpeck/actuallyadditions/api/farmer/FarmerResult;"))
@@ -83,8 +86,12 @@ public abstract class TileEntityFarmerMixin implements FarmerWorkState, com.aamo
     @WrapOperation(method="checkBehaviors",at=@At(value="INVOKE",target="Lde/ellpeck/actuallyadditions/api/farmer/IFarmerBehavior;tryPlantSeed(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lde/ellpeck/actuallyadditions/api/internal/IFarmer;)Lde/ellpeck/actuallyadditions/api/farmer/FarmerResult;"))
     private FarmerResult aamoreadditions$plantingWork(IFarmerBehavior behavior,ItemStack seed,Level level,BlockPos pos,
                                                      IFarmer farmer,Operation<FarmerResult> original) {
+        // Memory mode: only the recorded seed, once its crop fits the ground; a skip is not work (sleep stays possible).
+        var tile=(TileEntityFarmer)(Object)this;
+        if(!com.aamoreadditions.farmer.FarmerMemoryRuntime.allowsPlant(tile,pos,seed))return FarmerResult.FAIL;
         FarmerResult result=original.call(behavior,seed,level,pos,farmer);
         if(result==FarmerResult.SUCCESS)aamoreadditions$planted=true;
+        if(result==FarmerResult.SUCCESS)com.aamoreadditions.farmer.FarmerMemoryRuntime.planted(tile,pos,seed);
         return result;
     }
     /** Observe the original final output-fit result, after seed fallback and Fortune.
@@ -103,15 +110,19 @@ public abstract class TileEntityFarmerMixin implements FarmerWorkState, com.aamo
     private void aamoreadditions$writeSleep(CompoundTag tag,HolderLookup.Provider provider,
                                             TileEntityBase.NBTType type,CallbackInfo ci) {
         if(type==TileEntityBase.NBTType.SYNC)tag.putBoolean(AAMORE_SLEEP,aamoreadditions$scan.sleeping());
-        if(type==TileEntityBase.NBTType.SAVE_TILE || type==TileEntityBase.NBTType.SYNC)
+        if(type==TileEntityBase.NBTType.SAVE_TILE || type==TileEntityBase.NBTType.SYNC){
             aamoreadditions$ringInventory().write(tag,provider,type==TileEntityBase.NBTType.SYNC);
+            com.aamoreadditions.farmer.FarmerMemoryRuntime.write(aamoreadditions$memory,tag,type==TileEntityBase.NBTType.SYNC);
+        }
     }
     @Inject(method="readSyncableNBT",at=@At("TAIL"))
     private void aamoreadditions$readSleep(CompoundTag tag,HolderLookup.Provider provider,
                                            TileEntityBase.NBTType type,CallbackInfo ci) {
         if(type==TileEntityBase.NBTType.SYNC)aamoreadditions$scan.syncedSleeping(tag.getBoolean(AAMORE_SLEEP));
         else {aamoreadditions$scan.loaded();waitTime=0;}
-        if(type==TileEntityBase.NBTType.SAVE_TILE || type==TileEntityBase.NBTType.SYNC)
+        if(type==TileEntityBase.NBTType.SAVE_TILE || type==TileEntityBase.NBTType.SYNC){
             aamoreadditions$ringInventory().read(tag,provider,type==TileEntityBase.NBTType.SYNC);
+            com.aamoreadditions.farmer.FarmerMemoryRuntime.read(aamoreadditions$memory,tag,type==TileEntityBase.NBTType.SYNC);
+        }
     }
 }

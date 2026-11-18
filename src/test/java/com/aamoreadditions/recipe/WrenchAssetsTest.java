@@ -22,9 +22,10 @@ class WrenchAssetsTest {
     @Test void originalDiagonalWrenchRecipeOnlyChangesTopLeftIngredientAndResult() throws Exception {
         var recipe = json("data/aamoreadditions/recipe/upgrade_wrench.json");
         assertEquals("minecraft:crafting_shaped", recipe.get("type"));
-        assertEquals(List.of("C  ", " S ", "  S"), recipe.get("pattern"));
+        assertEquals(List.of("C  ", "AS ", "  S"), recipe.get("pattern"));
         assertEquals(Map.of("C", Map.of("item", "actuallyadditions:ender_casing"),
-                "S", Map.of("item", "actuallyadditions:enori_crystal")), recipe.get("key"));
+                "S", Map.of("item", "actuallyadditions:enori_crystal"),
+                "A", Map.of("item", "actuallyadditions:advanced_coil")), recipe.get("key"));
         assertEquals(Map.of("id", "aamoreadditions:upgrade_wrench", "count", 1.0), recipe.get("result"));
     }
     @Test void resetConsumesOneWrenchAndCreatesOneFreshUnrecordedWrench() throws Exception {
