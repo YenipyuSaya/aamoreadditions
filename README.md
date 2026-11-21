@@ -9,11 +9,3 @@ NeoForge addon for Actually Additions.
 | Version | 1.2.1 |
 | Depends on | Actually Additions `1.3.26+mc1.21.1` (Maven) |
 | Optional compile | Jade, JEI APIs |
-
-## Build
-
-Requires JDK 21.
-
-```bash
-./gradlew build
-```
