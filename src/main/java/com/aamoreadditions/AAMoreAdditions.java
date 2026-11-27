@@ -37,6 +37,9 @@ public class AAMoreAdditions {
             .displayItems((params, out) -> {
                 out.accept(com.aamoreadditions.block.ModBlocks.ALLOY_FURNACE_ITEM.get());
                 out.accept(com.aamoreadditions.block.ModBlocks.DECORATIVE_MACHINE_CASING_ITEM.get());
+                out.accept(com.aamoreadditions.block.ModBlocks.ADVANCED_PHANTOM_BOOSTER_ITEM.get());
+                out.accept(com.aamoreadditions.block.ModBlocks.TRANSFINITE_PHANTOM_BOOSTER_ITEM.get());
+                out.accept(com.aamoreadditions.block.ModBlocks.DIMENSIONAL_PHANTOM_BOOSTER_ITEM.get());
                 for (UpgradeType t : UpgradeType.values()) out.accept(t.item());
                 out.accept(UPGRADE_WRENCH.get());
             })
@@ -56,7 +59,7 @@ public class AAMoreAdditions {
         UpgradeSlots.ATTACHMENTS.register(modBus);
         if (Boolean.getBoolean("aamoreadditions.verifyMixins")) {
             // Dev check: force-load mixin targets so a broken injection fails at startup.
-            for (String c : new String[]{"inventory.CrusherContainer", "inventory.ContainerFurnaceDouble", "inventory.ContainerCoalGenerator", "inventory.ContainerOilGenerator", "blocks.base.BlockContainerBase", "tile.TileEntityCrusher", "tile.TileEntityPoweredFurnace", "tile.TileEntityCoalGenerator", "tile.TileEntityOilGenerator", "tile.TileEntityHeatCollector", "tile.TileEntityLeafGenerator"}) {
+            for (String c : new String[]{"inventory.CrusherContainer", "inventory.ContainerFurnaceDouble", "inventory.ContainerCoalGenerator", "inventory.ContainerOilGenerator", "blocks.base.BlockContainerBase", "tile.TileEntityCrusher", "tile.TileEntityPoweredFurnace", "tile.TileEntityCoalGenerator", "tile.TileEntityOilGenerator", "tile.TileEntityHeatCollector", "tile.TileEntityLeafGenerator", "inventory.ContainerMiner", "tile.TileEntityVerticalDigger"}) {
                 try { Class.forName("de.ellpeck.actuallyadditions.mod." + c); } catch (ClassNotFoundException e) { throw new RuntimeException(e); }
             }
             LOGGER.info("aamoreadditions: upgrade-slot mixin targets loaded OK");

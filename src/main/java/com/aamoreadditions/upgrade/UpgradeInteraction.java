@@ -39,7 +39,7 @@ public final class UpgradeInteraction {
         if (be == null || !UpgradeSlots.supports(be)) return;
         ItemStack held = player.getMainHandItem();
 
-        if (held.is(UpgradeSlots.UPGRADES)) {
+        if (UpgradeSlots.isAnyUpgradeItem(held)) { // wrong-machine upgrades get the INVALID hint from canInstall
             // Cancel on both sides (client still sends the use packet; the server decides).
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.sidedSuccess(level.isClientSide));

@@ -42,14 +42,34 @@
     "CompositeEntryBaseAccessor",
     "LootItemAccessor",
     "TagEntryAccessor",
-    "NestedLootTableAccessor"
+    "NestedLootTableAccessor",
+    "TileEntityBaseAccessor",
+    "TileEntityVerticalDiggerMixin",
+    "ContainerMinerMixin",
+    "WorldUtilFakeHarvestMixin",
+    "WorldUtilUseItemMixin",
+    "TileEntityBreakerMixin",
+    "TileEntityPhantomPlacerMixin",
+    "DefaultFarmerBehaviorMixin",
+    "LensKillerMixin",
+    "MachineFakePlayerRemovalMixin",
+    "TileEntityPhantomfaceRangeMixin",
+    "TileEntityPhantomPlacerBoundMixin",
+    "TileEntityPlayerInterfaceRangeMixin",
+    "ItemPhantomConnectorMixin",
+    "TileEntityPhantomItemfaceMixin",
+    "TileEntityPhantomEnergyfaceMixin",
+    "TileEntityPhantomLiquifaceMixin",
+    "TileEntityPhantomRedstonefaceMixin",
+    "TileEntityPhantomfaceCapListenerMixin"
   ],
   "client": [
     "AbstractContainerScreenMixin",
     "RenderDisplayStandMixin",
     "RenderEmpowererMixin",
     "ConfigTooltipMixin",
-    "GuiFarmerRipeningMixin"
+    "GuiFarmerRipeningMixin",
+    "PhantomHudMixin"
   ],
   "injectors": {
     "defaultRequire": 1

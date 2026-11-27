@@ -31,7 +31,7 @@ import com.aamoreadditions.mixin.*;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.ItemAbilities;
-import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import com.aamoreadditions.fake.MachineFakePlayers;
 
 /** Minecraft side of the Farmer memory mode; the rules live in {@link FarmerMemory}. Server side only. */
 public final class FarmerMemoryRuntime {
@@ -91,7 +91,7 @@ public final class FarmerMemoryRuntime {
         BlockState groundState = level.getBlockState(ground);
         int cost = FarmerEffects.cost(tile, TILL_COST);
         if (groundState.getBlock() instanceof FarmBlock || !FarmerEffects.canWork(tile) || tile.getEnergy() < cost) return false;
-        var player = FakePlayerFactory.getMinecraft(level);
+        var player = MachineFakePlayers.of(tile);
         ItemStack hoe = new ItemStack(Items.DIAMOND_HOE);
         if (!player.mayUseItemAt(query, Direction.UP, hoe)) return false;
         if (!state.isAir()) { // like AA's defaultPlant: clear replaceable vegetation on grass/dirt first (tilling needs air above)

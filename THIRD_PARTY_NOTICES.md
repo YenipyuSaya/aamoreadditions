@@ -29,6 +29,12 @@ self-created and covered by this project’s MIT license.
 
 - `assets/aamoreadditions/textures/item/upgrade_wrench.png`: edited from Actually Additions 1.21.1 / 1.3.26 `assets/actuallyadditions/textures/item/laser_wrench.png`, using the Ender Casing palette and retaining the original black outline.
 
+### Phantom booster tier models and ring textures
+
+- `assets/aamoreadditions/models/block/{advanced,transfinite,dimensional}_phantom_booster.json` are derived from Actually Additions' `assets/actuallyadditions/models/block/phantom_booster.json` (same pillar/base/cap elements and display transforms; only the five thin ring planes' UVs/texture slot were changed). They reference AA's own `actuallyadditions:block/models/model_phantom_booster` texture; that texture is **not copied** into this addon.
+- `assets/aamoreadditions/textures/block/{advanced,transfinite,dimensional}_phantom_booster_rings.png` (+ `.mcmeta`) are new pixel art made for this addon whose colours are sampled from Actually Additions textures (empowered Enori / Diamatine crystal block and Ender Star palettes) and from vanilla Minecraft palettes (Eye of Ender, Nether Star). They are listed here as AA-palette-derived and kept under the Actually Additions MIT notice below to be safe.
+- The Dimensional Phantom Booster's client effects use vanilla `minecraft:textures/entity/creeper/creeper_armor.png` and the vanilla enchantment glint texture at runtime; neither is copied.
+
 The complete Actually Additions MIT notice is shipped at
 `META-INF/licenses/ActuallyAdditions-MIT.txt` and reproduced below.
 

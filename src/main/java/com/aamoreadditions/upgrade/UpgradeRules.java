@@ -13,13 +13,14 @@ public final class UpgradeRules {
     private UpgradeRules() {}
 
     public enum Check {
-        OK, INVALID, DUPLICATE, MISSING_PREREQ;
+        OK, INVALID, DUPLICATE, MISSING_PREREQ, CONFLICT;
 
         public Component message() {
             return switch (this) {
                 case INVALID -> Component.translatable("message.aamoreadditions.upgrades.invalid_item").withStyle(ChatFormatting.RED);
                 case DUPLICATE -> Component.translatable("message.aamoreadditions.upgrades.already_installed").withStyle(ChatFormatting.WHITE);
                 case MISSING_PREREQ -> Component.translatable("message.aamoreadditions.upgrades.missing_prerequisite").withStyle(ChatFormatting.RED);
+                case CONFLICT -> Component.translatable("message.aamoreadditions.upgrades.conflict").withStyle(ChatFormatting.RED);
                 default -> Component.empty();
             };
         }
@@ -37,14 +38,20 @@ public final class UpgradeRules {
 
     /** Handler-aware check: also rejects upgrades this machine doesn't accept (energizer: efficiency only). */
     public static Check canInstall(UpgradeSlots.Handler h, ItemStack stack, int ignoreIndex) {
-        if (stack.is(UpgradeSlots.UPGRADES) && !UpgradeSlots.allows(h.holder(), UpgradeType.of(stack))) return Check.INVALID;
-        if (!valid(h)) return stack.is(UpgradeSlots.UPGRADES) ? Check.OK : Check.INVALID;
+        if (!UpgradeSlots.isUpgradeItem(h.holder(), stack)) return Check.INVALID;
+        if (!UpgradeSlots.isDigger(h.holder()) && !UpgradeSlots.allows(h.holder(), UpgradeType.of(stack))) return Check.INVALID;
+        // Digger exclusivity holds in both modes and also while the slots are otherwise illegal.
+        Check exclusive = exclusive(h.contents(), stack, ignoreIndex);
+        if (exclusive != Check.OK) return exclusive;
+        if (!valid(h)) return Check.OK;
         return canInstall(h.contents(), stack, ignoreIndex);
     }
 
     /** Can {@code stack} be installed, treating slot {@code ignoreIndex} as empty (-1 = none)? */
     public static Check canInstall(List<ItemStack> contents, ItemStack stack, int ignoreIndex) {
-        if (!stack.is(UpgradeSlots.UPGRADES)) return Check.INVALID;
+        if (!UpgradeSlots.isAnyUpgradeItem(stack)) return Check.INVALID;
+        Check exclusive = exclusive(contents, stack, ignoreIndex);
+        if (exclusive != Check.OK) return exclusive;
         if (!UpgradeStartup.dependency()) return Check.OK;
         for (int i = 0; i < contents.size(); i++) {
             if (i != ignoreIndex && ItemStack.isSameItem(contents.get(i), stack)) return Check.DUPLICATE;
@@ -59,8 +66,20 @@ public final class UpgradeRules {
         return Check.OK;
     }
 
+    /** Silk Touch vs Fortune (red conflict) and a second Block Placing plugin (white duplicate), both modes. */
+    private static Check exclusive(List<ItemStack> contents, ItemStack stack, int ignoreIndex) {
+        var drill = com.aamoreadditions.digger.DiggerUpgrade.of(stack);
+        if (drill == null) return Check.OK;
+        return switch (com.aamoreadditions.digger.DiggerRules.canAdd(com.aamoreadditions.digger.DiggerUpgrade.kinds(contents, ignoreIndex), drill)) {
+            case CONFLICT -> Check.CONFLICT;
+            case DUPLICATE -> Check.DUPLICATE;
+            case OK -> Check.OK;
+        };
+    }
+
     public static boolean validContents(List<ItemStack> contents) {
-        for (ItemStack s : contents) if (!s.isEmpty() && !s.is(UpgradeSlots.UPGRADES)) return false;
+        for (ItemStack s : contents) if (!s.isEmpty() && !UpgradeSlots.isAnyUpgradeItem(s)) return false;
+        if (!com.aamoreadditions.digger.DiggerRules.valid(com.aamoreadditions.digger.DiggerUpgrade.kinds(contents, -1))) return false;
         return UpgradeLogic.valid(contents.stream().map(s -> {
             UpgradeType t = UpgradeType.of(s);
             return s.isEmpty() ? null : t == null

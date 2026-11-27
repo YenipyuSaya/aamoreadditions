@@ -1,6 +1,7 @@
 package com.aamoreadditions.mixin;
 
 import com.aamoreadditions.effect.*;
+import com.aamoreadditions.fake.MachineFakePlayers;
 import com.aamoreadditions.upgrade.FarmerWorkState;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -48,7 +49,10 @@ public abstract class TileEntityFarmerMixin implements FarmerWorkState, com.aamo
     @Inject(method="serverTick(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/BlockEntity;)V",at=@At("HEAD"))
     private static void aamoreadditions$prepare(Level level,BlockPos pos,BlockState state,
                                                 net.minecraft.world.level.block.entity.BlockEntity be,CallbackInfo ci) {
-        if(be instanceof TileEntityFarmer tile)FarmerScanRuntime.prepare(tile);
+        if(be instanceof TileEntityFarmer tile){
+            FarmerScanRuntime.prepare(tile);
+            MachineFakePlayers.bind(tile);
+        }
     }
     @WrapOperation(method="serverTick(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/BlockEntity;)V",
             at=@At(value="FIELD",target="Lde/ellpeck/actuallyadditions/mod/tile/TileEntityFarmer;waitTime:I",opcode=Opcodes.GETFIELD,ordinal=0))
@@ -58,6 +62,11 @@ public abstract class TileEntityFarmerMixin implements FarmerWorkState, com.aamo
         int armed=FarmerUpgradeMath.armCounter(remaining,period);
         ((FarmerWorkState)tile).aamoreadditions$setFarmerWait(armed);
         return armed;
+    }
+    @Inject(method="serverTick(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/BlockEntity;)V",at=@At("RETURN"))
+    private static void aamoreadditions$unbindFakePlayer(Level level,BlockPos pos,BlockState state,
+            net.minecraft.world.level.block.entity.BlockEntity be,CallbackInfo ci) {
+        if(be instanceof TileEntityFarmer)MachineFakePlayers.unbind();
     }
     @Inject(method="serverTick(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/BlockEntity;)V",at=@At("TAIL"))
     private static void aamoreadditions$ripeningAfterNative(Level level,BlockPos pos,BlockState state,

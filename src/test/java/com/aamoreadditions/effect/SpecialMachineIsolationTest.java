@@ -77,7 +77,7 @@ class SpecialMachineIsolationTest {
     @Test void farmerTrueUsesHighestWithoutIndependentPenaltiesOrFortuneQuantity() {
         mode(true);
         var active=FarmerEffects.evaluate(List.of(UpgradeType.SPEED_1,UpgradeType.SPEED_2,UpgradeType.SPEED_3,UpgradeType.EFFICIENCY_1,UpgradeType.EFFICIENCY_2));
-        assertEquals(5,active.speed()); assertEquals(1,active.cooldown()); assertEquals(1.25,active.energy());
+        assertEquals(5,active.speed()); assertEquals(2,active.cooldown()); assertEquals(1.25,active.energy());
         assertEquals(2,active.capacity()); assertEquals(3,active.fortune());
         assertEquals(1,FarmerEffects.evaluate(List.of(UpgradeType.EFFICIENCY_1)).fortune());
         assertEquals(new FarmerRipeningMath.Plan(10,34),FarmerRipeningMath.evaluate(List.of(

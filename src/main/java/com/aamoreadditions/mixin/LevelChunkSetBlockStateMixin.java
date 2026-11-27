@@ -1,5 +1,6 @@
 package com.aamoreadditions.mixin;
 
+import com.aamoreadditions.booster.BoosterEffects;
 import com.aamoreadditions.structure.CasingCrossEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -22,5 +23,6 @@ public abstract class LevelChunkSetBlockStateMixin {
         BlockState old = cir.getReturnValue();
         if (old == null || this.level.isClientSide) return; // null = nothing changed
         CasingCrossEvents.onBlockChanged(this.level, pos, old, state);
+        BoosterEffects.onBlockChanged(this.level, pos, old, state);
     }
 }

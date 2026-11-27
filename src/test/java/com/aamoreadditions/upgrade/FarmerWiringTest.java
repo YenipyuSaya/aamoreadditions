@@ -13,7 +13,7 @@ class FarmerWiringTest {
     @Test void farmerConfigIsAppendedWithoutReindexingExistingMachines() throws Exception {
         var s=source("upgrade/UpgradeStartup.java");
         assertTrue(s.contains("\"energizer\",\"alloy_furnace\",\"casing_cross\",\"farmer\""));
-        assertTrue(s.contains("List.of(5,5,5,5,5,5,5,2,5,3,5)"));
+        assertTrue(s.contains("List.of(5,5,5,5,5,5,5,2,5,3,5,5)")); // + vertical_digger, appended
         assertTrue(s.contains("TileEntityFarmer) key = \"farmer\""));
         assertTrue(s.contains("SLOTS.add(b.gameRestart().defineInRange(KEYS.get(i), local.slots().get(i), 0, 10))"));
         assertEquals("Farmer",EnglishConfigNames.label("farmer"));
@@ -21,7 +21,7 @@ class FarmerWiringTest {
     @Test void policyPacketBoundTracksAllKeysAndRejectsOldProtocol() throws Exception {
         var s=source("network/ModNetwork.java");
         assertTrue(s.contains("ByteBufCodecs.list(com.aamoreadditions.upgrade.UpgradeStartup.KEYS.size())"));
-        assertTrue(s.contains("event.registrar(\"3\").playToClient(UpgradePolicyPayload.TYPE"));
+        assertTrue(s.contains("event.registrar(\"4\").playToClient(UpgradePolicyPayload.TYPE")); // bumped: KEYS gained vertical_digger
         assertFalse(s.contains("ByteBufCodecs.list(10)"));
         assertTrue(source("upgrade/UpgradeSession.java").contains("snapshot.slots()"));
     }
@@ -67,7 +67,8 @@ class FarmerWiringTest {
         var s=source("client/UpgradeInfo.java");
         var farmer=s.substring(s.indexOf("if (be instanceof TileEntityFarmer tile)"),s.indexOf("var lines = new java.util.ArrayList"));
         for (String field:List.of("cooldown","energy","fortune"))assertTrue(farmer.contains("info.farmer."+field));
-        assertTrue(farmer.contains("aqua(effects.energy())"));assertTrue(farmer.contains("withStyle(ChatFormatting.AQUA)"));
+        assertTrue(farmer.contains("aqua(effects.energy())"));assertTrue(farmer.contains("scanPeriodValue("));
+        assertTrue(s.contains("Component.literal(String.valueOf(ticks)).withStyle(ChatFormatting.AQUA)"));
         assertTrue(farmer.contains("withStyle(ChatFormatting.GREEN)"));
         assertFalse(farmer.contains("info.slots"));assertFalse(farmer.contains("effects_pending"));
         assertFalse(farmer.contains("appendBoundary"));

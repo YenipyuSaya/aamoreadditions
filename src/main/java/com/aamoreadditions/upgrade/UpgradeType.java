@@ -42,6 +42,8 @@ public enum UpgradeType {
     public static UpgradeType of(ItemStack stack) {
         if (stack.isEmpty()) return null;
         for (UpgradeType t : values()) if (t.item != null && stack.is(t.item())) return t;
-        return null;
+        // AA drill Speed/Fortune upgrades act as these lines inside the Vertical Digger (the only holder accepting them).
+        var drill = com.aamoreadditions.digger.DiggerUpgrade.of(stack);
+        return drill == null ? null : drill.alias;
     }
 }

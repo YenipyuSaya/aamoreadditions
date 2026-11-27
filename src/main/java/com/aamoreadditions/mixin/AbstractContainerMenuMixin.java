@@ -25,5 +25,7 @@ public class AbstractContainerMenuMixin implements UpgradeMenuState {
             aamoreadditions$upgradeOpen = id == BUTTON_OPEN;
             cir.setReturnValue(true);
         }
+        if ((Object) this instanceof de.ellpeck.actuallyadditions.mod.inventory.ContainerMiner miner
+                && com.aamoreadditions.digger.DiggerMenus.click(miner, player, id)) cir.setReturnValue(true);
     }
 }

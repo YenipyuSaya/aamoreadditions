@@ -84,9 +84,15 @@ class UpgradeConfigPruningTest {
         var server = leaves(UpgradeConfig.SPEC.getSpec());
         var startup = leaves(UpgradeStartup.SPEC.getSpec());
         // +1 later: farmer_memory_seed_candidates (a new Farmer field, not part of the pruning count)
-        assertEquals(162, server.size()); assertEquals(12, startup.size());
-        assertEquals(174, server.size() + startup.size());
-        assertEquals(155, 325 - (server.size() + startup.size() - 3 - 1));
+        // +3 server (vertical_digger group) and +1 startup (slots.vertical_digger): new fields, not part of the pruning count
+        // +3 server (phantom_boosters group): new fields, not part of the pruning count
+        assertEquals(168, server.size()); assertEquals(13, startup.size());
+        assertEquals(181, server.size() + startup.size());
+        assertEquals(155, 325 - (server.size() + startup.size() - 3 - 1 - 4 - 3));
+        assertTrue(server.containsKey("phantom_boosters.max_stack_count"));
+        assertTrue(server.containsKey("phantom_boosters.aa_range_multiplier"));
+        assertTrue(server.containsKey("phantom_boosters.advanced_range_multiplier"));
+        assertFalse(server.containsKey("phantom_boosters.overload_explosion_power"));
         assertTrue(server.containsKey("farmer.farmer_memory_seed_candidates"));
         assertEquals(31, server.keySet().stream().filter(k -> k.startsWith("base_values.") || !k.contains(".")).count());
         assertFalse(UpgradeConfig.SPEC.getSpec().contains("energizer.speed_upgrade_machine_1"));
@@ -205,7 +211,7 @@ class UpgradeConfigPruningTest {
         Set<String> paths = new TreeSet<>();
         collectValues(UpgradeConfig.SPEC.getValues(), "", paths);
         assertEquals(leaves(UpgradeConfig.SPEC.getSpec()).keySet(), paths);
-        assertEquals(162, paths.size());
+        assertEquals(168, paths.size());
     }
     private static void collectValues(UnmodifiableConfig node, String prefix, Set<String> paths) {
         assertFalse(node.valueMap().isEmpty());
@@ -225,8 +231,8 @@ class UpgradeConfigPruningTest {
                 Map.entry("crusher",5), Map.entry("crusher_double",5), Map.entry("powered_furnace",5),
                 Map.entry("coal_generator",5), Map.entry("oil_generator",5), Map.entry("heat_collector",5),
                 Map.entry("leaf_generator",5), Map.entry("energizer",2), Map.entry("alloy_furnace",5),
-                Map.entry("casing_cross",3), Map.entry("farmer",5));
-        assertEquals(12,spec.size());
+                Map.entry("casing_cross",3), Map.entry("farmer",5), Map.entry("vertical_digger",5));
+        assertEquals(13,spec.size());
         counts.forEach((machine,count) -> {
             var v = spec.get("slots." + machine); assertNotNull(v); assertEquals(count, v.getDefault());
             assertEquals(0,v.getRange().getMin()); assertEquals(10,v.getRange().getMax());

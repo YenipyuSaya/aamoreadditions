@@ -54,7 +54,9 @@ public enum UpgradeJadeProvider implements IBlockComponentProvider, IServerDataP
         var installed = handler.contents().stream().filter(s -> !s.isEmpty()).toList();
         var visible = UpgradeDisplay.visible(installed, dependency, legal, stack -> {
             var type = UpgradeType.of(stack);
-            return type != null && active.contains(type);
+            if (type != null) return active.contains(type);
+            // Standalone digger plugins (Silk, Placer, Range) have no AAMA line; they are active when installed and legal.
+            return com.aamoreadditions.digger.DiggerUpgrade.of(stack) != null;
         });
         var groups = UpgradeDisplay.group(visible, ItemStack::getItem);
         var state = new CompoundTag();

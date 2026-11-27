@@ -8,6 +8,7 @@ public final class EnglishConfigNames {
     public static String label(String key) {
         if (key.equals("Dependency Upgrade Plugins")) return key;
         if (key.equals("farmer_accelerates_ripening")) return "Farmer accelerates ripening";
+        if (key.equals("aa_range_multiplier")) return "AA Range Multiplier";
         String[] words = key.replace('_',' ').replace('-',' ').split("\\s+");
         var result = new java.util.StringJoiner(" ");
         for (String word : words) {

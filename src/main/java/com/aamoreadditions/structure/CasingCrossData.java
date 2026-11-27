@@ -286,16 +286,11 @@ public class CasingCrossData extends SavedData {
         }
     }
 
-    /** Shared FE pool: unlimited insert; external extraction is enabled only in independent mode. */
+    /** Shared FE pool: unlimited insert; external extraction is never allowed (consumer). */
     public final class Energy extends EnergyStorage {
-        Energy() { super(CasingCrossEnergy.capacity(), Integer.MAX_VALUE, com.aamoreadditions.upgrade.UpgradeStartup.dependency() ? 0 : Integer.MAX_VALUE); }
-        @Override public boolean canExtract() { return !com.aamoreadditions.upgrade.UpgradeStartup.dependency(); }
-        @Override public int extractEnergy(int max, boolean simulate) {
-            if (com.aamoreadditions.upgrade.UpgradeStartup.dependency()) return 0;
-            int taken = Math.min(Math.max(0,max),energy);
-            if (!simulate && taken > 0) { energy -= taken; setDirty(); }
-            return taken;
-        }
+        Energy() { super(CasingCrossEnergy.capacity(), Integer.MAX_VALUE, 0); }
+        @Override public boolean canExtract() { return false; }
+        @Override public int extractEnergy(int max, boolean simulate) { return 0; }
         @Override public int receiveEnergy(int max, boolean sim) {
             int r = super.receiveEnergy(max, sim);
             if (r > 0 && !sim) setDirty();

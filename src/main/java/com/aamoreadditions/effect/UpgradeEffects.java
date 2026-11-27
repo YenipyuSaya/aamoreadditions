@@ -22,6 +22,7 @@ public final class UpgradeEffects {
 
     public static double speed(BlockEntity be) {
         if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer t) return FarmerEffects.evaluate(t).speed();
+        if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityVerticalDigger t) return com.aamoreadditions.digger.DiggerEffects.evaluate(t).speed();
         MachineKind m = MachineKind.of(be);
         if (m == null || !be.hasData(UpgradeSlots.UPGRADE_INV)) return 1.0;
         if (!com.aamoreadditions.upgrade.UpgradeStartup.dependency())
@@ -33,6 +34,7 @@ public final class UpgradeEffects {
 
     public static double energy(BlockEntity be) {
         if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer t) return FarmerEffects.evaluate(t).energy();
+        if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityVerticalDigger t) return com.aamoreadditions.digger.DiggerEffects.evaluate(t).energy();
         MachineKind m = MachineKind.of(be);
         if (m == null || !be.hasData(UpgradeSlots.UPGRADE_INV)) return 1.0;
         if (!com.aamoreadditions.upgrade.UpgradeStartup.dependency()) {
@@ -53,6 +55,7 @@ public final class UpgradeEffects {
     /** Takes the active set directly: called from the handler itself (also during attachment deserialization). */
     public static double capacity(BlockEntity be, java.util.List<UpgradeType> active) {
         if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer) return FarmerEffects.evaluate(active).capacity();
+        if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityVerticalDigger) return com.aamoreadditions.digger.DiggerEffects.evaluate(active).capacity();
         MachineKind m = MachineKind.of(be);
         if (m == null) return 1.0;
         java.util.List<Double> mults = new java.util.ArrayList<>(2);
@@ -71,6 +74,7 @@ public final class UpgradeEffects {
         if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityLeafGenerator t) return t.storage;
         if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityEnergizer t) return t.storage;
         if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer t) return t.storage;
+        if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityVerticalDigger t) return t.storage;
         return null;
     }
 
@@ -160,15 +164,31 @@ public final class UpgradeEffects {
         return 1.0;
     }
 
-    /** Sets maxExtract = max(1, round(AA's original maxExtract * multiplier)); originals of 0 stay 0. */
+    /** True for the FE producers AAMA upgrades; everyone else with our storage is a consumer. */
+    public static boolean isEnergyGenerator(BlockEntity be) {
+        var m = MachineKind.of(be);
+        return m == MachineKind.COAL_GENERATOR || m == MachineKind.OIL_GENERATOR
+                || m == MachineKind.HEAT_COLLECTOR || m == MachineKind.LEAF_GENERATOR;
+    }
+
+    /**
+     * Consumer machines (digger, farmer, processors, energizer, alloy furnace, …) always have
+     * {@code maxExtract = 0} so the exposed capability cannot be extracted from, in both modes.
+     * Generators keep the existing output-rate rules (unlimited in independent mode; speed tier in dependency mode).
+     */
     public static void applyOutputRate(BlockEntity be, int baseMaxExtract, java.util.List<UpgradeType> active) {
         var st = storage(be);
         if (st == null) return;
+        var acc = (com.aamoreadditions.mixin.EnergyStorageAccessor) st;
+        if (!isEnergyGenerator(be)) {
+            acc.aamoreadditions$setMaxExtract(0);
+            return;
+        }
         if (!com.aamoreadditions.upgrade.UpgradeStartup.dependency()) {
-            ((com.aamoreadditions.mixin.EnergyStorageAccessor) st).aamoreadditions$setMaxExtract(Integer.MAX_VALUE); return;
+            acc.aamoreadditions$setMaxExtract(Integer.MAX_VALUE); return;
         }
         if (baseMaxExtract <= 0) return;
-        ((com.aamoreadditions.mixin.EnergyStorageAccessor) st).aamoreadditions$setMaxExtract(UpgradeMath.capacity(baseMaxExtract, outputRate(be, active)));
+        acc.aamoreadditions$setMaxExtract(UpgradeMath.capacity(baseMaxExtract, outputRate(be, active)));
     }
 
     public static int time(BlockEntity be, int original) {

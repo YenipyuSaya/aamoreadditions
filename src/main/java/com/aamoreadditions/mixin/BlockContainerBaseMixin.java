@@ -21,6 +21,8 @@ public class BlockContainerBaseMixin {
             if (be != null && UpgradeSlots.supports(be)) UpgradeSlots.drop(level, be);
             if(!level.isClientSide && be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer farmer)
                 com.aamoreadditions.farmer.FarmerRingMenus.drop(level,farmer);
+            if (be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityVerticalDigger digger)
+                com.aamoreadditions.digger.DiggerRuntime.dropFillers(level, digger);
         }
     }
 }
