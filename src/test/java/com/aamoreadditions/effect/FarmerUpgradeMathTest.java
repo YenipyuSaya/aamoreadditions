@@ -52,13 +52,23 @@ class FarmerUpgradeMathTest {
             assertEquals(new UpgradeAggregation.BoundaryFactors(1,1,1),UpgradeAggregation.boundaryFactors(UpgradeAggregation.Kind.FARMER,n,n,true));
         }
     }
-    @Test void idealAndRuntimeTimingUseTheConfirmedFloorRule() {
+    @Test void idealAndRuntimeTimingUseTheCeilingRule() {
         assertEquals(1.2,FarmerUpgradeMath.idealScanTicks(6,List.of(5.0)),EPS);
-        assertEquals(1,FarmerUpgradeMath.scanTicks(6,5));
+        assertEquals(2,FarmerUpgradeMath.scanTicks(6,5)); // 6/5=1.2 -> 2, not 1
         assertEquals(3,FarmerUpgradeMath.scanTicks(6,2));
         assertEquals(2,FarmerUpgradeMath.scanTicks(6,3));
+        assertEquals(2,FarmerUpgradeMath.scanTicks(6,4)); // 6/4=1.5 -> 2
+        assertEquals(1,FarmerUpgradeMath.scanTicks(6,6));
+        assertEquals(1,FarmerUpgradeMath.scanTicks(6,7));
+        assertEquals(2,FarmerUpgradeMath.scanTicks(5,3)); // digger Speed II: 5/3 ≈ 1.667 -> 2
+        assertEquals(3,FarmerUpgradeMath.scanTicks(5,2)); // digger Speed I: 5/2=2.5 -> 3
+        assertEquals(1,FarmerUpgradeMath.scanTicks(5,5));
+        assertEquals(2,FarmerUpgradeMath.scanTicks(6,5.9)); // 1.017 -> 2 (just above 1)
+        assertEquals(1,FarmerUpgradeMath.scanTicks(6,6.0)); // exactly 1 -> 1
         assertEquals(1,FarmerUpgradeMath.idealScanTicks(6,List.of(1000.0)),EPS);
         assertThrows(IllegalArgumentException.class,()->FarmerUpgradeMath.idealScanTicks(6,List.of(0.0)));
+        assertFalse(FarmerUpgradeMath.atScanCap(FarmerUpgradeMath.scanTicks(6,5)));
+        assertTrue(FarmerUpgradeMath.atScanCap(FarmerUpgradeMath.scanTicks(6,6)));
     }
     @Test void fortuneThresholdExamples() {
         assertEquals(0,FarmerUpgradeMath.fortuneLevel(1,0)); // .7
@@ -133,7 +143,7 @@ class FarmerUpgradeMathTest {
         var both=FarmerUpgradeMath.evaluate(List.of(efficiency(1),efficiency(2)),true);
         assertEquals(3,both.fortune());assertEquals(0.5,both.energy(),EPS);assertEquals(2,both.capacity(),EPS);
         var mixed=FarmerUpgradeMath.evaluate(List.of(speed(1),speed(2),speed(3),efficiency(1),efficiency(2)),true);
-        assertEquals(5,mixed.speed(),EPS);assertEquals(1,mixed.cooldown());
+        assertEquals(5,mixed.speed(),EPS);assertEquals(2,mixed.cooldown()); // 6/5=1.2 -> 2; dependency Speed III does not hit the cap
         assertEquals(1.25,mixed.energy(),EPS);assertEquals(3,mixed.fortune());
     }
     @Test void independentMixedLinesUseConfirmedMultiplicationAndThreshold() {
@@ -175,7 +185,7 @@ class FarmerUpgradeMathTest {
             plugins.addAll(Collections.nCopies(e1,efficiency(1)));plugins.addAll(Collections.nCopies(e2,efficiency(2)));
             var e=FarmerUpgradeMath.evaluate(plugins,false);
             double speed=s1+s2==0?1:s1*2+s2*3;
-            assertEquals(speed,e.speed(),EPS);assertEquals(Math.max(1,(int)Math.floor(6/speed)),e.cooldown());
+            assertEquals(speed,e.speed(),EPS);assertEquals(FarmerUpgradeMath.scanTicks(6,speed),e.cooldown());
             double se=(s1+s2==0?1:s1*1.5+s2*2)*(1+0.1*UpgradeAggregation.boundaryLayers(s1+s2));
             double ee=Math.pow(0.8,e1)*Math.pow(0.5,e2)*(1+0.15*UpgradeAggregation.boundaryLayers(e1+e2));
             assertEquals(se*ee,e.energy(),EPS);

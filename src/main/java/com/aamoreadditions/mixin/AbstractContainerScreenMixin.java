@@ -33,12 +33,14 @@ public abstract class AbstractContainerScreenMixin {
     @Inject(method = "hasClickedOutside", at = @At("HEAD"), cancellable = true)
     private void aamoreadditions$stripIsInside(double mx, double my, int guiLeft, int guiTop, int button, CallbackInfoReturnable<Boolean> cir) {
         if (UpgradeStrip.isOpen(menu) && UpgradeStrip.contains(menu, mx - leftPos, my - topPos)) cir.setReturnValue(false);
+        if (com.aamoreadditions.client.digger.DiggerScreen.insidePanel((AbstractContainerScreen<?>) (Object) this, mx - leftPos, my - topPos)) cir.setReturnValue(false);
     }
 
     /** Draw the sliding panel BEFORE the machine background so it appears to come out from behind it. */
     @Inject(method = "renderBackground", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;renderBg(Lnet/minecraft/client/gui/GuiGraphics;FII)V"))
     private void aamoreadditions$drawPanelBehind(GuiGraphics g, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         if (UpgradeMenus.hasUpgradeSlots(menu)) UpgradeStrip.renderPanel((AbstractContainerScreen<?>) (Object) this, g, partialTick);
+        com.aamoreadditions.client.digger.DiggerScreen.renderPanel((AbstractContainerScreen<?>) (Object) this, g, partialTick);
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"))

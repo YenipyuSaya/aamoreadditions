@@ -50,7 +50,7 @@ class FarmerMemoryWiringTest {
         assertTrue(begin.contains("memory.observe(query.asLong(), null, bareFarmland(level, query, Blocks.AIR.defaultBlockState()));"));
         assertTrue(r.contains("return of(tile).allowsPlant(query.asLong(), itemId(seed), id -> cropFits(tile.getLevel(), query, id));"));
         var hoe = between(r, "private static boolean hoe(", "private static boolean bareFarmland(");
-        assertTrue(hoe.contains("FakePlayerFactory.getMinecraft(level)"));
+        assertTrue(hoe.contains("MachineFakePlayers.of(tile)"));
         assertTrue(hoe.contains("new ItemStack(Items.DIAMOND_HOE)"));
         assertTrue(hoe.contains("FarmerEffects.cost(tile, TILL_COST)"));
         assertTrue(hoe.contains("!FarmerEffects.canWork(tile) || tile.getEnergy() < cost"));

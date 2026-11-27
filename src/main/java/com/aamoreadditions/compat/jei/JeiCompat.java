@@ -75,6 +75,19 @@ public class JeiCompat implements IModPlugin {
                         screen.efficientMode() ? EFFICIENT : ALLOYING));
             }
         });
+        // Vertical Digger: keep JEI's overlay clear of the fillers panel (extends past imageWidth).
+        // Extra area follows the menu open flag (same as slots / hasClickedOutside / the upgrade panel):
+        // reserved only once the open slide has finished, and dropped immediately on close.
+        // The fillers toggle sits inside the GUI at (134,42), so it is not an extra area.
+        reg.addGuiContainerHandler(de.ellpeck.actuallyadditions.mod.inventory.gui.GuiMiner.class, new mezz.jei.api.gui.handlers.IGuiContainerHandler<de.ellpeck.actuallyadditions.mod.inventory.gui.GuiMiner>() {
+            @Override
+            public java.util.List<net.minecraft.client.renderer.Rect2i> getGuiExtraAreas(de.ellpeck.actuallyadditions.mod.inventory.gui.GuiMiner screen) {
+                if (!com.aamoreadditions.client.digger.DiggerScreen.open(screen)) return java.util.List.of();
+                int l = screen.getGuiLeft(), t = screen.getGuiTop();
+                return java.util.List.of(new net.minecraft.client.renderer.Rect2i(l + com.aamoreadditions.digger.DiggerMenus.PANEL_X, t + com.aamoreadditions.digger.DiggerMenus.PANEL_Y,
+                        com.aamoreadditions.digger.DiggerMenus.PANEL_W, com.aamoreadditions.digger.DiggerMenus.PANEL_H));
+            }
+        });
         // Empowerer structure: jump to AA's own Empowerer category (no category of ours)
         reg.addRecipeClickArea(com.aamoreadditions.client.screen.CasingCrossScreen.class,
                 com.aamoreadditions.client.screen.CasingCrossScreen.RECIPE_AREA_X, com.aamoreadditions.client.screen.CasingCrossScreen.RECIPE_AREA_Y,

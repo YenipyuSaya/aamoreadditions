@@ -75,7 +75,7 @@ public final class ModNetwork {
 
     @SubscribeEvent
     public static void register(RegisterPayloadHandlersEvent event) {
-        event.registrar("3").playToClient(UpgradePolicyPayload.TYPE, UpgradePolicyPayload.CODEC,
+        event.registrar("4").playToClient(UpgradePolicyPayload.TYPE, UpgradePolicyPayload.CODEC,
                 (p, ctx) -> ctx.enqueueWork(() -> com.aamoreadditions.upgrade.UpgradeStartup.remote(
                         new com.aamoreadditions.upgrade.UpgradeStartup.Snapshot(p.dependency(), p.slots()))));
         event.registrar("1").optional().playToServer(AlloyTransferPayload.TYPE, AlloyTransferPayload.CODEC,

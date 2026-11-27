@@ -45,7 +45,8 @@ public final class UpgradeMenus {
         if (slot instanceof UpgradeSlot) {
             if (!slot.mayPickup(player)) return ItemStack.EMPTY;
             if (!inv.aamoreadditions$moveItemStackTo(stack, invStart, invEnd, true)) return ItemStack.EMPTY;
-        } else if (slot.container instanceof Inventory && stack.is(UpgradeSlots.UPGRADES)) {
+        } else if (slot.container instanceof Inventory
+                && UpgradeSlots.isUpgradeItem(((UpgradeSlot) menu.slots.get(upStart)).handler().holder(), stack)) {
             UpgradeSlots.Handler h = ((UpgradeSlot) menu.slots.get(upStart)).handler();
             if (UpgradeRules.canInstall(h, stack, -1) != UpgradeRules.Check.OK) return ItemStack.EMPTY; // rejected: do nothing
             if (!inv.aamoreadditions$moveItemStackTo(stack, upStart, upEnd, false)) return null; // slots full: fall back to AA logic

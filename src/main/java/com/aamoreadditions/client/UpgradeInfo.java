@@ -25,17 +25,41 @@ public final class UpgradeInfo {
 
     private static MutableComponent aqua(double v) { return Component.literal(fmt(v)).withStyle(ChatFormatting.AQUA); }
 
+    /** Aqua tick count; when the scan period is at the 1-tick cap, append the gold Max hint. */
+    public static MutableComponent scanPeriodValue(int ticks) {
+        var value = Component.literal(String.valueOf(ticks)).withStyle(ChatFormatting.AQUA);
+        if (com.aamoreadditions.effect.FarmerUpgradeMath.atScanCap(ticks))
+            value = value.append(Component.translatable("gui.aamoreadditions.info.speed_cap").withStyle(ChatFormatting.GOLD));
+        return value;
+    }
+
     public static List<Component> lines(BlockEntity be) {
         if (be instanceof TileEntityFarmer tile) {
             var effects = com.aamoreadditions.effect.FarmerEffects.evaluate(tile);
             return List.of(
                     Component.translatable("gui.aamoreadditions.info.farmer.cooldown",
-                            Component.literal(String.valueOf(com.aamoreadditions.effect.FarmerScanRuntime.cooldown(tile))).withStyle(ChatFormatting.AQUA)).withStyle(ChatFormatting.WHITE),
+                            scanPeriodValue(com.aamoreadditions.effect.FarmerScanRuntime.cooldown(tile))).withStyle(ChatFormatting.WHITE),
                     Component.translatable("gui.aamoreadditions.info.farmer.energy",
                             aqua(effects.energy())).withStyle(ChatFormatting.WHITE),
                     Component.translatable("gui.aamoreadditions.info.farmer.fortune",
                             Component.literal(String.valueOf(com.aamoreadditions.effect.FarmerEffects.fortune(tile)))
                                     .withStyle(ChatFormatting.GREEN)).withStyle(ChatFormatting.WHITE));
+        }
+        if (be instanceof TileEntityVerticalDigger digger) {
+            var effects = com.aamoreadditions.digger.DiggerEffects.evaluate(digger);
+            var lines = new java.util.ArrayList<Component>();
+            lines.add(Component.translatable("gui.aamoreadditions.info.farmer.cooldown",
+                    scanPeriodValue(com.aamoreadditions.digger.DiggerEffects.period(effects.speed()))).withStyle(ChatFormatting.WHITE));
+            lines.add(Component.translatable("gui.aamoreadditions.info.farmer.energy", aqua(effects.energy())).withStyle(ChatFormatting.WHITE));
+            lines.add(Component.translatable("gui.aamoreadditions.info.digger.vertical_span",
+                    Component.literal(String.valueOf(com.aamoreadditions.digger.DiggerEffects.verticalSpan(digger)))
+                            .withStyle(ChatFormatting.AQUA)).withStyle(ChatFormatting.WHITE));
+            if (com.aamoreadditions.digger.DiggerEffects.silkTouch(digger))
+                lines.add(Component.translatable("gui.aamoreadditions.info.digger.silk_touch").withStyle(ChatFormatting.GREEN));
+            else
+                lines.add(Component.translatable("gui.aamoreadditions.info.farmer.fortune",
+                        Component.literal(String.valueOf(com.aamoreadditions.digger.DiggerEffects.fortune(digger))).withStyle(ChatFormatting.GREEN)).withStyle(ChatFormatting.WHITE));
+            return lines;
         }
         var lines = new java.util.ArrayList<>(baseLines(be));
         if (be != null && com.aamoreadditions.upgrade.UpgradeSlots.supports(be))

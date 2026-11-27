@@ -29,6 +29,23 @@ public final class UpgradeConfig {
     private static final Supplier<Boolean> FALSE = () -> false;
     private static final Entry NEUTRAL = new Entry(ONE, ONE, ONE, ONE, ONE, FALSE, ONE);
 
+    private static final ModConfigSpec.IntValue DIGGER_MINING_FE, DIGGER_ORES_ONLY_MULTIPLIER, DIGGER_PLACING_FE;
+    /** Vertical Digger FE per mined block (AA: 650); the upgrade energy multiplier applies on top. */
+    public static int diggerMiningFe(){return SPEC.isLoaded() ? DIGGER_MINING_FE.get() : com.aamoreadditions.digger.DiggerEffects.DEFAULT_MINING_FE;}
+    /** Cost factor of the "Only Mining Ores" mode (AA: 3). */
+    public static int diggerOresOnlyMultiplier(){return SPEC.isLoaded() ? DIGGER_ORES_ONLY_MULTIPLIER.get() : com.aamoreadditions.digger.DiggerEffects.DEFAULT_ORES_ONLY_MULTIPLIER;}
+    /** Vertical Digger FE per placed filler block; the upgrade energy multiplier applies on top. */
+    public static int diggerPlacingFe(){return SPEC.isLoaded() ? DIGGER_PLACING_FE.get() : com.aamoreadditions.digger.DiggerEffects.DEFAULT_PLACING_FE;}
+    private static final ModConfigSpec.IntValue PHANTOM_BOOSTER_MAX_STACK, PHANTOM_BOOSTER_AA_MULTIPLIER, PHANTOM_BOOSTER_ADVANCED_MULTIPLIER;
+    public static final int DEFAULT_PHANTOM_BOOSTER_MAX_STACK = 3;
+    public static final int DEFAULT_PHANTOM_BOOSTER_AA_MULTIPLIER = 2;
+    public static final int DEFAULT_PHANTOM_BOOSTER_ADVANCED_MULTIPLIER = 5;
+    /** Consecutive boosters counted above a machine (default 3, 1–256). */
+    public static int phantomBoosterMaxStack(){return SPEC.isLoaded() ? PHANTOM_BOOSTER_MAX_STACK.get() : DEFAULT_PHANTOM_BOOSTER_MAX_STACK;}
+    /** Range multiplier of one Actually Additions Range Booster (default 2). */
+    public static int phantomBoosterAaMultiplier(){return SPEC.isLoaded() ? PHANTOM_BOOSTER_AA_MULTIPLIER.get() : DEFAULT_PHANTOM_BOOSTER_AA_MULTIPLIER;}
+    /** Range multiplier of one Advanced Phantom Booster (default 5). Specials use this on the Vertical Digger. */
+    public static int phantomBoosterAdvancedMultiplier(){return SPEC.isLoaded() ? PHANTOM_BOOSTER_ADVANCED_MULTIPLIER.get() : DEFAULT_PHANTOM_BOOSTER_ADVANCED_MULTIPLIER;}
     private static final ModConfigSpec.BooleanValue FARMER_SMART_SLEEP;
     private static final ModConfigSpec.BooleanValue FARMER_ACCELERATES_RIPENING;
     public static boolean farmerAcceleratesRipening(){return !SPEC.isLoaded() || FARMER_ACCELERATES_RIPENING.get();}
@@ -148,6 +165,25 @@ public final class UpgradeConfig {
                 .translation(com.aamoreadditions.config.EnglishConfigNames.label("farmer_memory_seed_candidates"))
                 .defineListAllowEmpty("farmer_memory_seed_candidates", com.aamoreadditions.farmer.FarmerSeedCandidates.DEFAULTS, () -> "", o -> o instanceof String);
         b.pop();
+        b.push("vertical_digger");
+        DIGGER_MINING_FE = b.comment("Vertical Digger FE per mined block (AA: 650). The upgrade energy multiplier applies on top.")
+                .defineInRange("vertical_digger_mining_fe", com.aamoreadditions.digger.DiggerEffects.DEFAULT_MINING_FE, 0, 1000000);
+        DIGGER_ORES_ONLY_MULTIPLIER = b.comment("Vertical Digger: mining cost factor while \"Only Mining Ores\" is active (AA: 3).")
+                .defineInRange("vertical_digger_ores_only_multiplier", com.aamoreadditions.digger.DiggerEffects.DEFAULT_ORES_ONLY_MULTIPLIER, 1, 1000);
+        DIGGER_PLACING_FE = b.comment("Vertical Digger FE per filler block placed by the Drill Block Placing Augment. The upgrade energy multiplier applies on top.")
+                .defineInRange("vertical_digger_block_placing_fe", com.aamoreadditions.digger.DiggerEffects.DEFAULT_PLACING_FE, 0, 1000000);
+        b.pop();
+        b.push("phantom_boosters");
+        PHANTOM_BOOSTER_MAX_STACK = b.comment("Maximum consecutive phantom boosters counted above a machine. A non-booster block breaks the stack. Default 3, range 1–256.", "Warning: Excessively high value may cause performance issues.")
+                .translation(com.aamoreadditions.config.EnglishConfigNames.label("max_stack_count"))
+                .defineInRange("max_stack_count", DEFAULT_PHANTOM_BOOSTER_MAX_STACK, 1, 256);
+        PHANTOM_BOOSTER_AA_MULTIPLIER = b.comment("Range multiplier of one Actually Additions Range Booster. Shared by Phantomfaces, Phantom Placer/Breaker, the Player Interface, and the Vertical Digger. Mixed vanilla + Advanced stacks multiply.")
+                .translation(com.aamoreadditions.config.EnglishConfigNames.label("aa_range_multiplier"))
+                .defineInRange("aa_range_multiplier", DEFAULT_PHANTOM_BOOSTER_AA_MULTIPLIER, 2, 256);
+        PHANTOM_BOOSTER_ADVANCED_MULTIPLIER = b.comment("Range multiplier of one Advanced Phantom Booster. Shared as above. On the Vertical Digger, Transfinite and Dimensional boosters also use this multiplier and have no special binding.")
+                .translation(com.aamoreadditions.config.EnglishConfigNames.label("advanced_range_multiplier"))
+                .defineInRange("advanced_range_multiplier", DEFAULT_PHANTOM_BOOSTER_ADVANCED_MULTIPLIER, 2, 256);
+        b.pop();
         for (MachineKind m : MachineKind.values()) {
             b.push(m.key);
             Map<UpgradeType, Entry> map = new EnumMap<>(UpgradeType.class);
@@ -168,7 +204,7 @@ public final class UpgradeConfig {
                                 ? b.comment("Processing machines: TOTAL energy per operation (0 allowed; per-tick use never drops below 1 FE/t).", "Generators: UTILIZATION, multiplies the burn time per fuel after the speed division.").defineInRange("energy_multiplier", d[1], 0.0, 100000.0) : ONE,
                         b.comment("Max energy storage; stored energy is clamped when it drops.").defineInRange("capacity_multiplier", d[2], 0.01, 100000.0),
                         !isGenerator(m) && !speedLine ? b.comment("Hidden effect: external FE receive limit (AA's original maxReceive).",
-                                "Dependency mode only: highest EFFICIENCY tier counts. Independent mode uses unlimited I/O.")
+                                "Dependency mode only: highest EFFICIENCY tier counts. Independent mode uses unlimited input. Consumers never allow external extraction.")
                                 .defineInRange("input_rate_multiplier", d[3], 0.01, 100000.0) : ONE,
                         isGenerator(m) && speedLine ? b.comment("Dependency mode: generators' FE output limit, highest SPEED tier. Independent mode uses unlimited I/O.")
                                 .defineInRange("output_rate_multiplier", d[4], 0.01, 100000.0) : ONE,

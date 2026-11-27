@@ -55,7 +55,8 @@ class FarmerSleepWiringTest {
         assertTrue(s.contains("syncedSleeping(tag.getBoolean(AAMORE_SLEEP))"));
         assertTrue(s.contains("else {aamoreadditions$scan.loaded();waitTime=0;}"));
         var info=source("client/UpgradeInfo.java");
-        assertTrue(info.contains("String.valueOf(com.aamoreadditions.effect.FarmerScanRuntime.cooldown(tile))"));
+        assertTrue(info.contains("scanPeriodValue(com.aamoreadditions.effect.FarmerScanRuntime.cooldown(tile))"));
+        assertTrue(info.contains("Component.literal(String.valueOf(ticks)).withStyle(ChatFormatting.AQUA)"));
         assertTrue(info.contains("withStyle(ChatFormatting.AQUA)"));assertTrue(info.contains("withStyle(ChatFormatting.GREEN)"));
         var runtime=source("effect/FarmerScanRuntime.java");
         assertTrue(runtime.contains("if(old!=scan.sleeping())tile.sendUpdate()"));

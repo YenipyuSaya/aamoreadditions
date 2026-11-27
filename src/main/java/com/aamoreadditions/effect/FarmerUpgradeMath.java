@@ -37,10 +37,19 @@ public final class FarmerUpgradeMath {
         return new Effects(speed, scanTicks(6,speed),energy,capacity(capacities),fortune);
     }
 
-    /** Actual scan-to-scan period. AA's old waitTime=5 represented six ticks. */
+    /** Actual scan-to-scan period, rounded up (ceiling), at least {@link #MIN_SCAN_TICKS}.
+     * Values in (1, 2] become 2 ticks; only a raw period of 1 or less is 1 tick. */
     public static int scanTicks(int originalPeriod, double speed) {
         if(originalPeriod<1 || !Double.isFinite(speed) || speed<=0)throw new IllegalArgumentException("Invalid Farmer scan timing");
-        return (int)Math.max(1,Math.min(Integer.MAX_VALUE,Math.floor(originalPeriod/speed)));
+        // 1e-9 matches UpgradeMath's ceil: exact integer ratios (6/2, 6/3, 5/5) stay exact.
+        return (int)Math.max(MIN_SCAN_TICKS,Math.min(Integer.MAX_VALUE,Math.ceil(originalPeriod/speed - 1e-9)));
+    }
+
+    /** Minimum scan period in ticks. Farmer original period is 6, the digger's is 5. */
+    public static final int MIN_SCAN_TICKS = 1;
+
+    public static boolean atScanCap(int ticks) {
+        return ticks <= MIN_SCAN_TICKS;
     }
     /** Arm the existing AA decrement branch without adding a reset-only idle tick. */
     public static int armCounter(int remaining,int period) {
@@ -75,7 +84,7 @@ public final class FarmerUpgradeMath {
         return UpgradeAggregation.unpenalizedSum(efficiencyCapacity);
     }
 
-    /** Unrounded value retained for tests; runtime uses scanTicks and its confirmed floor rule. */
+    /** Unrounded value retained for tests; runtime uses scanTicks (ceiling, min 1). */
     public static double idealScanTicks(int originalPeriod, List<Double> speedCoefficients) {
         double speed = scanSpeed(speedCoefficients);
         if (originalPeriod < 1 || !Double.isFinite(speed) || speed <= 0)

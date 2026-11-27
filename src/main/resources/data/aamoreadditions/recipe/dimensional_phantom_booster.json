@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ETE",
+    "TNT",
+    "ETE"
+  ],
+  "key": {
+    "N": {
+      "item": "actuallyadditions:ender_star"
+    },
+    "T": {
+      "item": "aamoreadditions:transfinite_phantom_booster"
+    },
+    "E": {
+      "item": "actuallyadditions:empowered_emeradic_crystal_block"
+    }
+  },
+  "result": {
+    "id": "aamoreadditions:dimensional_phantom_booster",
+    "count": 2
+  }
+}

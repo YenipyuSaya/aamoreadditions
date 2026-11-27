@@ -60,7 +60,29 @@ public final class UpgradeSlots {
                 || be instanceof TileEntityHeatCollector
                 || be instanceof TileEntityLeafGenerator
                 || be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityEnergizer
-                || be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer;
+                || be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityFarmer
+                || be instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityVerticalDigger;
+    }
+
+    /** The Vertical Digger takes AA drill upgrades instead of AAMA machine upgrades. */
+    public static boolean isDigger(Object holder) {
+        return holder instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityVerticalDigger;
+    }
+
+    /** Is this an upgrade item for this holder (the gate that used to be the UPGRADES tag alone)? */
+    public static boolean isUpgradeItem(Object holder, ItemStack stack) {
+        return isDigger(holder) ? com.aamoreadditions.digger.DiggerUpgrade.of(stack) != null : stack.is(UPGRADES);
+    }
+
+    /** Upgrade item for any holder (holder-free rule paths: wrench records, slot lists, sneak-click routing). */
+    public static boolean isAnyUpgradeItem(ItemStack stack) {
+        return stack.is(UPGRADES) || com.aamoreadditions.digger.DiggerUpgrade.of(stack) != null;
+    }
+
+    /** Holder-aware acceptance by item. */
+    public static boolean allows(Object holder, ItemStack stack) {
+        if (isDigger(holder)) return com.aamoreadditions.digger.DiggerUpgrade.of(stack) != null;
+        return stack.is(UPGRADES) && allows(holder, UpgradeType.of(stack));
     }
 
     /** Shared target resolution for the wrench and server-side inspection (including Cross parts). */
@@ -89,6 +111,7 @@ public final class UpgradeSlots {
     /** Energizer accepts only the efficiency line. */
     public static boolean allows(Object holder, UpgradeType t) {
         if (isFarmer(holder)) return t != null;
+        if (isDigger(holder)) return t != null; // Speed/Fortune aliases; Silk/Placer are accepted via allows(holder, stack)
         if (holder instanceof SpeedOnlyHolder) return t != null && t.line == UpgradeType.Line.SPEED;
         return !(holder instanceof de.ellpeck.actuallyadditions.mod.tile.TileEntityEnergizer) || (t != null && t.line == UpgradeType.Line.EFFICIENCY);
     }
@@ -209,7 +232,7 @@ public final class UpgradeSlots {
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            return stack.is(UPGRADES) && allows(holder, UpgradeType.of(stack));
+            return allows(holder, stack);
         }
 
         @Override

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "RER",
+    "EBE",
+    "RER"
+  ],
+  "key": {
+    "B": {
+      "item": "actuallyadditions:phantom_booster"
+    },
+    "E": {
+      "item": "actuallyadditions:empowered_enori_crystal"
+    },
+    "R": {
+      "item": "actuallyadditions:empowered_restonia_crystal"
+    }
+  },
+  "result": {
+    "id": "aamoreadditions:advanced_phantom_booster",
+    "count": 1
+  }
+}

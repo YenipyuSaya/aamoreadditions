@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = {CrusherContainer.class, ContainerFurnaceDouble.class, ContainerCoalGenerator.class, ContainerOilGenerator.class, de.ellpeck.actuallyadditions.mod.inventory.ContainerEnergizer.class, de.ellpeck.actuallyadditions.mod.inventory.ContainerFarmer.class}, remap = false)
+@Mixin(value = {CrusherContainer.class, ContainerFurnaceDouble.class, ContainerCoalGenerator.class, ContainerOilGenerator.class, de.ellpeck.actuallyadditions.mod.inventory.ContainerEnergizer.class, de.ellpeck.actuallyadditions.mod.inventory.ContainerFarmer.class, de.ellpeck.actuallyadditions.mod.inventory.ContainerMiner.class}, remap = false)
 public class UpgradeQuickMoveMixin {
     @Inject(method = "quickMoveStack", at = @At("HEAD"), cancellable = true)
     private void aamoreadditions$quickMoveUpgrades(Player player, int index, CallbackInfoReturnable<ItemStack> cir) {
@@ -22,6 +22,8 @@ public class UpgradeQuickMoveMixin {
             if(ring!=null){cir.setReturnValue(ring);return;}
         }
         ItemStack result = UpgradeMenus.quickMove((AbstractContainerMenu) (Object) this, player, index);
+        if (result == null && (Object) this instanceof de.ellpeck.actuallyadditions.mod.inventory.ContainerMiner miner)
+            result = com.aamoreadditions.digger.DiggerMenus.quickMove(miner, player, index);
         if (result != null) cir.setReturnValue(result);
     }
 }

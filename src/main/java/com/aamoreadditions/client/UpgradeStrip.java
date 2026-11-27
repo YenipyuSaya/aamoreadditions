@@ -56,6 +56,7 @@ public final class UpgradeStrip {
     /** Per-GUI x, checked against AA textures/widgets (see report). */
     static int buttonX(AbstractContainerScreen<?> screen) {
         if (screen instanceof de.ellpeck.actuallyadditions.mod.inventory.gui.GuiFarmer) return 134; // actual frame ends at x148
+        if (screen instanceof de.ellpeck.actuallyadditions.mod.inventory.gui.GuiMiner) return 134;  // gui_breaker frame ends at x148
         if (screen instanceof de.ellpeck.actuallyadditions.mod.inventory.gui.CrusherScreen c
                 && c.getMenu().isDouble) return 134;                                   // double crusher: inner edge x=146
         if (screen instanceof de.ellpeck.actuallyadditions.mod.inventory.gui.GuiFurnaceDouble) return 134; // inner edge x=146
@@ -108,14 +109,23 @@ public final class UpgradeStrip {
     }
 
     private static float progress(Anim a) {
-        float t = Math.min(1f, (Util.getMillis() - a.changedAt) / (float) ANIM_MS);
-        float target = a.open ? 1f : 0f;
-        float lin = a.from + (target - a.from) * t;
-        return lin;
+        return progress(a.from, a.open, a.changedAt);
     }
 
-    private static float ease(float p) { // ease-in-out cubic
+    /** Linear 0..1 progress over {@link #ANIM_MS}. Shared with the digger fillers panel. */
+    public static float progress(float from, boolean open, long changedAt) {
+        float t = Math.min(1f, (Util.getMillis() - changedAt) / (float) ANIM_MS);
+        return from + ((open ? 1f : 0f) - from) * t;
+    }
+
+    /** ease-in-out cubic. Shared with the digger fillers panel. */
+    public static float ease(float p) {
         return p < 0.5f ? 4 * p * p * p : 1 - (float) Math.pow(-2 * p + 2, 3) / 2;
+    }
+
+    /** Pixel offset from the fully-open position (0 = open, {@code slide} = fully hidden). */
+    public static int slideOffset(float p, int slide) {
+        return Math.round((1f - ease(p)) * slide);
     }
 
     @SubscribeEvent
@@ -155,7 +165,7 @@ public final class UpgradeStrip {
                         UpgradeInfo.appendBoundary(lines,cm.upgrades);
                         return lines;
                     }));
-        } else if (be != null && (com.aamoreadditions.upgrade.UpgradeSlots.isFarmer(be)
+        } else if (be != null && (com.aamoreadditions.upgrade.UpgradeSlots.isFarmer(be) || com.aamoreadditions.upgrade.UpgradeSlots.isDigger(be)
                 || (com.aamoreadditions.effect.MachineKind.of(be) != null && com.aamoreadditions.effect.MachineKind.of(be) != com.aamoreadditions.effect.MachineKind.ENERGIZER))) {
             final var fbe = be;
             event.addListener(new UpgradeInfoButton(screen.getGuiLeft() + infoX(screen), screen.getGuiTop() + infoY(screen), () -> UpgradeInfo.lines(fbe)));
@@ -187,7 +197,7 @@ public final class UpgradeStrip {
             ((UpgradeMenuState) screen.getMenu()).aamoreadditions$setUpgradeOpen(true);
         }
         if (p <= 0f) return;
-        int offset = Math.round((1f - ease(p)) * slide(screen.getMenu()));
+        int offset = slideOffset(p, slide(screen.getMenu()));
         int n = slotCount(screen.getMenu()), px = screen.getGuiLeft() + panelX(n), py = screen.getGuiTop() + stripY(screen.getMenu()) + offset;
         // Repeat a real cell; never sample beyond the original five-cell texture.
         g.blit(TEXTURE,px,py,0,0,5,H,TEX_W,TEX_H);
@@ -210,14 +220,14 @@ public final class UpgradeStrip {
         UpgradeRules.Check check = UpgradeRules.Check.OK;
         if (hovered instanceof UpgradeSlot u) {
             ItemStack carried = menu.getCarried();
-            if (!carried.isEmpty() && carried.is(com.aamoreadditions.upgrade.UpgradeSlots.UPGRADES)) {
+            if (!carried.isEmpty() && com.aamoreadditions.upgrade.UpgradeSlots.isUpgradeItem(u.handler().holder(), carried)) {
                 check = UpgradeRules.canInstall(u.handler(), carried, u.getSlotIndex());
             }
         } else if (hovered.container instanceof Inventory && Screen.hasShiftDown() && menu.getCarried().isEmpty()
-                && hovered.getItem().is(com.aamoreadditions.upgrade.UpgradeSlots.UPGRADES)) {
+                && com.aamoreadditions.upgrade.UpgradeSlots.isUpgradeItem(first.handler().holder(), hovered.getItem())) {
             check = UpgradeRules.canInstall(first.handler(), hovered.getItem(), -1);
         }
-        if (check == UpgradeRules.Check.DUPLICATE || check == UpgradeRules.Check.MISSING_PREREQ) {
+        if (check == UpgradeRules.Check.DUPLICATE || check == UpgradeRules.Check.MISSING_PREREQ || check == UpgradeRules.Check.CONFLICT) {
             message = check.message();
             messageAt = Util.getMillis();
         }

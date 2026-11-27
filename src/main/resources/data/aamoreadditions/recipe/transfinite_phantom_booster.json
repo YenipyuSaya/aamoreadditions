@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "YDY",
+    "DAD",
+    "YDY"
+  ],
+  "key": {
+    "A": {
+      "item": "aamoreadditions:advanced_phantom_booster"
+    },
+    "D": {
+      "item": "actuallyadditions:empowered_diamatine_crystal_block"
+    },
+    "Y": {
+      "item": "minecraft:ender_eye"
+    }
+  },
+  "result": {
+    "id": "aamoreadditions:transfinite_phantom_booster",
+    "count": 1
+  }
+}

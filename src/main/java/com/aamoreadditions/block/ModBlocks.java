@@ -26,9 +26,34 @@ public final class ModBlocks {
     public static final DeferredItem<BlockItem> DECORATIVE_MACHINE_CASING_ITEM = AAMoreAdditions.ITEMS.register("decorative_machine_casing",
             () -> new BlockItem(DECORATIVE_MACHINE_CASING.get(), new Item.Properties()));
 
+    public static final DeferredBlock<PhantomBoosterBlock> ADVANCED_PHANTOM_BOOSTER =
+            BLOCKS.register("advanced_phantom_booster", PhantomBoosterBlock::new);
+    public static final DeferredItem<BlockItem> ADVANCED_PHANTOM_BOOSTER_ITEM =
+            AAMoreAdditions.ITEMS.register("advanced_phantom_booster",
+                    () -> new BlockItem(ADVANCED_PHANTOM_BOOSTER.get(), new Item.Properties()));
+
+    public static final DeferredBlock<PhantomBoosterBlock> TRANSFINITE_PHANTOM_BOOSTER =
+            BLOCKS.register("transfinite_phantom_booster", PhantomBoosterBlock::new);
+    public static final DeferredItem<BlockItem> TRANSFINITE_PHANTOM_BOOSTER_ITEM =
+            AAMoreAdditions.ITEMS.register("transfinite_phantom_booster",
+                    () -> new BlockItem(TRANSFINITE_PHANTOM_BOOSTER.get(), new Item.Properties()));
+
+    public static final DeferredBlock<PhantomBoosterBlock> DIMENSIONAL_PHANTOM_BOOSTER =
+            BLOCKS.register("dimensional_phantom_booster", DimensionalPhantomBoosterBlock::new);
+    public static final DeferredItem<BlockItem> DIMENSIONAL_PHANTOM_BOOSTER_ITEM =
+            AAMoreAdditions.ITEMS.register("dimensional_phantom_booster",
+                    () -> new BlockItem(DIMENSIONAL_PHANTOM_BOOSTER.get(), new Item.Properties()));
+
+
     @SuppressWarnings("DataFlowIssue")
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AlloyFurnaceBlockEntity>> ALLOY_FURNACE_BE = BLOCK_ENTITIES.register("alloyfurnace",
             () -> BlockEntityType.Builder.of(AlloyFurnaceBlockEntity::new, ALLOY_FURNACE.get()).build(null));
+
+    /** Data-less block entity of the Dimensional Phantom Booster, only used to attach the client effect renderer. */
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DimensionalPhantomBoosterBlockEntity>> DIMENSIONAL_PHANTOM_BOOSTER_BE =
+            BLOCK_ENTITIES.register("dimensional_phantom_booster",
+                    () -> BlockEntityType.Builder.of(DimensionalPhantomBoosterBlockEntity::new, DIMENSIONAL_PHANTOM_BOOSTER.get()).build(null));
 
     private ModBlocks() {}
 
